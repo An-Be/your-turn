@@ -73,8 +73,8 @@ scripts/db-check.mjs     build-time schema drift check
   Format-check with `isWellFormedToken()` before querying.
 - **Every mutating route starts with `rejectCrossSite(req)`** (CSRF: Sec-Fetch-Site,
   Origin, JSON content type), then `checkRateLimit()` if the route costs anything
-  (writes, AI calls, uploads), then `parseJsonBody(req, schema)`. Copy
-  `src/app/api/spaces/route.ts` as the starting point for any new route.
+  (writes, AI calls, uploads), then `parseJsonBody(req, schema)`. Start new routes by copying an existing
+  mutating route (in the template: `src/app/api/spaces/route.ts`).
 - **Zod object schemas strip unknown keys**; that is what blocks mass assignment.
   Never use `.passthrough()` / `.loose()`.
 - **Return 404, not 403**, for a resource that doesn't exist or isn't the caller's,

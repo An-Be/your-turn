@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import localFont from "next/font/local";
 import { GeistMono } from "geist/font/mono";
 import { connection } from "next/server";
-import { ToastProvider } from "@/components/ui/toast-provider";
+import { Toaster } from "@/components/ui/toaster";
 import { site } from "@/config/site";
 import "./globals.css";
 
@@ -34,7 +34,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   return (
     <html lang="en" className={`${spaceGrotesk.variable} ${GeistMono.variable}`}>
       <body className="min-h-dvh">
-        <ToastProvider>{children}</ToastProvider>
+        {children}
+        <Toaster />
       </body>
     </html>
   );

@@ -27,7 +27,7 @@ describe("parseCspReport", () => {
         "blocked-uri": "https://cdn.example/a.png?sig=1",
       },
     };
-    expect(parseCspReport(report)).toEqual([
+    expect(parseCspReport(report, ["/t/"])).toEqual([
       { directive: "img-src", blocked: "https://cdn.example/a.png", page: "https://tool.example/t/[secret]" },
     ]);
   });
@@ -37,7 +37,7 @@ describe("parseCspReport", () => {
       { type: "deprecation", body: {} },
       { type: "csp-violation", body: { effectiveDirective: "script-src-elem", blockedURL: "inline", documentURL: "https://tool.example/" } },
     ];
-    expect(parseCspReport(reports)).toEqual([{ directive: "script-src-elem", blocked: "inline", page: "https://tool.example/" }]);
+    expect(parseCspReport(reports, ["/t/"])).toEqual([{ directive: "script-src-elem", blocked: "inline", page: "https://tool.example/" }]);
   });
 
   it("returns nothing for junk", () => {

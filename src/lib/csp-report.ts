@@ -54,15 +54,15 @@ export function redactUrl(value: string | undefined, prefixes: readonly string[]
   return out.slice(0, MAX_FIELD_LENGTH);
 }
 
-export function parseCspReport(body: unknown): CspViolation[] {
+export function parseCspReport(body: unknown, prefixes: readonly string[] = secretPathPrefixes): CspViolation[] {
   const legacy = legacySchema.safeParse(body);
   if (legacy.success) {
     const r = legacy.data["csp-report"];
     return [
       {
         directive: (r["effective-directive"] ?? r["violated-directive"] ?? "unknown").slice(0, MAX_FIELD_LENGTH),
-        blocked: redactUrl(r["blocked-uri"]),
-        page: redactUrl(r["document-uri"]),
+        blocked: redactUrl(r["blocked-uri"], prefixes),
+        page: redactUrl(r["document-uri"], prefixes),
       },
     ];
   }
@@ -72,7 +72,7 @@ export function parseCspReport(body: unknown): CspViolation[] {
     .filter((r) => r.type === "csp-violation" && r.body)
     .map((r) => ({
       directive: (r.body?.effectiveDirective ?? "unknown").slice(0, MAX_FIELD_LENGTH),
-      blocked: redactUrl(r.body?.blockedURL),
-      page: redactUrl(r.body?.documentURL),
+      blocked: redactUrl(r.body?.blockedURL, prefixes),
+      page: redactUrl(r.body?.documentURL, prefixes),
     }));
 }

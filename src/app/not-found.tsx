@@ -1,6 +1,8 @@
 import Link from "next/link";
-import { Shell, SiteFooter, SiteHeader } from "@/components/site-chrome";
-import { Button } from "@/components/ui/button";
+import { SiteFooter } from "@/components/site/site-footer";
+import { SiteHeader } from "@/components/site/site-header";
+import { buttonVariants } from "@/components/ui/button";
+import { Shell } from "@/components/ui/shell";
 
 export default function NotFound() {
   return (
@@ -11,10 +13,8 @@ export default function NotFound() {
         <p className="text-[13px] leading-relaxed text-mute">
           It may have been rotated. Ask the other player for the new one.
         </p>
-        <Link href="/">
-          <Button variant="outline" size="lg" className="w-full">
-            Start a new tracker
-          </Button>
+        <Link href="/" className={buttonVariants({ variant: "outline", size: "lg", block: true })}>
+          Start a new tracker
         </Link>
       </main>
       <SiteFooter />

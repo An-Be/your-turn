@@ -8,45 +8,45 @@ Whose turn is it tonight? One shared link for two people, no login. Live at tagy
 
 ```bash
 npm install                 # also runs prisma generate
-cp .env.example .env        # paste the yourturn_app pooled + direct URLs
+cp .env.example .env        # yourturn_app pooled + direct URLs, CRON_SECRET
 npm run dev
-npm test                    # turn-rule unit tests
+npm test                    # vitest: turn rules, schemas, shared helpers
 ```
 
 Production runs on Vercel (region `cle1`, next to Neon `aws-us-east-2`). `DATABASE_URL`, `DIRECT_URL` and `CRON_SECRET` are set as Sensitive env vars in Vercel, Production only.
 
+Built on [tool-template](https://github.com/An-Be/tool-template): Next.js 16, Prisma 7, hand-rolled monochrome UI. Agent and code rules are in `AGENTS.md`.
+
 ## Security
 
-- **No secrets on the client.** The only secrets are the two database URLs. They are read by Prisma on the server, never use `NEXT_PUBLIC_`, and every module that touches the database imports `server-only`, so importing it from a client component fails the build.
-- **Least-privilege database role.** The app connects as `yourturn_app`, created with SQL so it is not in `neon_superuser`. It has `SELECT/INSERT/UPDATE/DELETE` on `Household`, `Night`, `Event` and nothing else: no DDL, no other tables, cannot create schemas.
-- **Schema changes are applied by the owner, not the app.** New migrations go in `prisma/migrations/`, get applied with the Neon owner role (SQL editor or Neon tooling), and then grants are extended to `yourturn_app` for any new table.
-- **Drift check on every build.** `npm run db:check` compares the live database to `schema.prisma` and fails the build if they differ.
-- **The link is the credential.** Tokens are 128-bit random (base62). `Referrer-Policy: no-referrer` keeps the URL from leaking to other sites; `/t/*` and `/api/*` are `no-store` and `noindex`; page titles never include names.
-- **Headers.** Nonce-based CSP (`src/middleware.ts`), HSTS, `X-Frame-Options: DENY`, `nosniff`, restrictive `Permissions-Policy`, `X-Powered-By` removed.
-- **Retention.** Nights and activity older than 7 days are deleted on every write for that tracker and by a daily cron (`/api/cron/purge`, `vercel.json`). The cron route rejects any request without `Authorization: Bearer $CRON_SECRET` (constant-time compare).
-- **Concurrency.** Every mutation locks the household row (`SELECT ... FOR UPDATE`) inside a transaction, so two phones tapping at once are applied one after the other. One record per night is also enforced by a unique index.
-- **CSRF.** Mutations require `Content-Type: application/json` and a same-origin `Origin`; the undo `DELETE` checks `Sec-Fetch-Site`/`Origin`.
-- **Input limits.** Names are trimmed, 1 to 24 chars; request bodies over 2 KB are rejected; tokens are format-checked before any query.
-- **Secrets never committed.** `.gitignore` excludes every `.env*` except `.env.example`.
+- **No secrets on the client.** Database and cron secrets are read on the server only, never use `NEXT_PUBLIC_`, and every module that touches them lives in `src/lib/server/` and imports `server-only`.
+- **Least-privilege database role.** The app connects as `yourturn_app`, created with SQL so it is not in `neon_superuser`, with row access on app tables only (`prisma/sql/app-role.sql`). Migrations are applied by the owner role.
+- **Drift check on every build.** `scripts/db-check.mjs` compares the live database to `schema.prisma` and fails the Vercel build if they differ.
+- **The link is the credential.** Tokens are 128-bit random (base62). `Referrer-Policy: no-referrer`; `/t/*` and `/api/*` are `no-store` and `noindex`; page titles never include names; secret segments are redacted from CSP logs.
+- **Headers.** Per-request nonce CSP (`src/proxy.ts`, violations reported to `/api/csp-report`), HSTS, `X-Frame-Options: DENY`, `nosniff`, restrictive `Permissions-Policy`, COOP, `X-Powered-By` removed.
+- **Rate limits.** Postgres-backed: tracker creation 20/hour/IP, tracker writes 120/10 min/IP.
+- **Retention.** Nights and activity older than 7 days are deleted on every write for that tracker and by a daily cron that requires `CRON_SECRET`.
+- **Concurrency.** Every mutation locks the household row inside a transaction; one record per night is enforced by a unique index.
+- **CSRF and input.** Mutations check `Sec-Fetch-Site`/`Origin` and require JSON; bodies are capped at 2 KB and validated with Zod; tokens are format-checked before any query.
 
 ## What's here
 
 ```
-prisma/schema.prisma            full schema for M1 to M3 (Household, Night, Event)
-src/app/page.tsx                landing + create form
-src/app/t/[token]/              tracker page, tonight view, history, device prompt
-src/app/api/households/         create, read, nights (tonight/backfill/correct/undo), swap, rotate
-src/app/api/cron/purge/         daily 7-day retention job
-src/lib/rules.ts                pure turn + window rules (unit tested in rules.test.ts)
-src/lib/tracker.ts              transactions: lock, purge, write, log
-src/lib/token.ts                128-bit base62 tokens
-src/components/                 Tab Math primitives: Button, Input, SectionLabel, Mark
+prisma/schema.prisma              Household, Night, Event, RateLimitHit
+src/app/page.tsx                  landing
+src/app/t/[token]/page.tsx        tracker page (server), renders components/tracker
+src/app/api/households/           create, read, nights (tonight/backfill/correct/undo), swap, rotate
+src/app/api/cron/purge/           daily 7-day retention job
+src/components/tracker/           create form, tracker view, history, device prompt
+src/components/ui/                shared primitives from tool-template
+src/lib/rules.ts                  pure turn + window rules
+src/lib/tracker-schema.ts         request schemas
+src/lib/server/tracker.ts         transactions: lock, purge, write, log
 ```
 
 ## Design notes
 
-- Same system as Tab Math: monochrome, Space Grotesk + Geist Mono, zero radius, 1px borders, numbered section labels.
-- Fonts are bundled locally (Space Grotesk woff2 in `src/app/fonts`, Geist Mono via the `geist` package), so builds don't depend on Google Fonts.
-- `src/components/mark.tsx` is a placeholder icon (two bars trading sides). No favicon yet.
-- Device choice is stored in localStorage under the household id, so rotating the link won't re-prompt.
+- tool-template system: monochrome, Space Grotesk + Geist Mono, zero radius, 1px borders, numbered section labels.
+- Fonts are bundled locally, so builds don't depend on Google Fonts.
+- `src/components/site/mark.tsx` is the mark (two bars trading sides).
 - The tracker page title is always "TagYourTurn", so link previews never show player names.

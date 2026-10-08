@@ -1,31 +1,34 @@
-import { correctNight, undoTonight } from "@/lib/tracker";
-import { isEditablePast, isPlausibleToday, isValidDate, parseCorrection, parseRecordedBy } from "@/lib/rules";
-import { badRequest, json, notFound, readJsonBody, rejectCrossSite, rejectCrossSiteNoBody } from "@/lib/http";
+import { isEditablePast, isPlausibleToday, isValidDate, parseRecordedBy, type CorrectionPatch } from "@/lib/rules";
+import { badRequest, json, notFound, parseJsonBody, rejectCrossSite } from "@/lib/server/http";
+import { correctNight, undoTonight } from "@/lib/server/tracker";
+import { limitTrackerWrites } from "@/lib/server/write-limit";
+import { correctNightSchema, MAX_BODY_BYTES } from "@/lib/tracker-schema";
 
-type Ctx = { params: Promise<{ token: string; date: string }> };
+type Ctx = RouteContext<"/api/households/[token]/nights/[date]">;
 
 // PATCH { today, starter?, status?, recordedBy? } → correct a past night in the window.
 // Corrections never change the current starter; Swap does that.
 export async function PATCH(req: Request, { params }: Ctx) {
   const blocked = rejectCrossSite(req);
   if (blocked) return blocked;
-
-  const body = await readJsonBody(req);
-  if (body === "too_large") return json({ error: "Request too large." }, 413);
-  if (!body) return badRequest("Invalid JSON.");
+  const limited = await limitTrackerWrites(req);
+  if (limited) return limited;
 
   const { token, date } = await params;
-  const today = body.today as string;
-  if (!isValidDate(date) || !isPlausibleToday(today)) return badRequest("Invalid date.");
+  if (!isValidDate(date)) return badRequest("Invalid date.");
+
+  const body = await parseJsonBody(req, correctNightSchema, MAX_BODY_BYTES);
+  if (!body.ok) return body.response;
+  const { today, starter, status, recordedBy } = body.data;
   if (!isEditablePast(date, today)) {
     return badRequest(date === today ? "Use Undo for tonight." : "Only the last 7 days can be corrected.");
   }
-  const parsed = parseCorrection(body);
-  if (!parsed.ok) return badRequest("Nothing valid to change.");
-  const by = parseRecordedBy(body.recordedBy);
-  if (!by.ok) return badRequest("Invalid recordedBy.");
 
-  const result = await correctNight(token, date, parsed.patch, by.value);
+  const patch: CorrectionPatch = {};
+  if (starter) patch.starter = starter;
+  if (status) patch.status = status;
+
+  const result = await correctNight(token, date, patch, recordedBy);
   if (result.kind === "not_found") return notFound();
   if (result.kind === "missing") return json({ error: "That night isn't logged." }, 404);
   return json({ night: result.night });
@@ -34,8 +37,10 @@ export async function PATCH(req: Request, { params }: Ctx) {
 // DELETE ?today=yyyy-mm-dd&by=A|B → undo tonight's record.
 // Only tonight can be undone; past nights are corrected, never deleted by hand.
 export async function DELETE(req: Request, { params }: Ctx) {
-  const blocked = rejectCrossSiteNoBody(req);
+  const blocked = rejectCrossSite(req, { hasBody: false });
   if (blocked) return blocked;
+  const limited = await limitTrackerWrites(req);
+  if (limited) return limited;
 
   const { token, date } = await params;
   const sp = new URL(req.url).searchParams;

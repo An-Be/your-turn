@@ -1,13 +1,15 @@
 // Full schema for M1–M3, so later milestones need no migration churn.
 
+// Prisma 7: the datasource URL lives in prisma.config.ts, not here.
+// The client is generated as TypeScript into src/lib/generated/prisma (gitignored).
+
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/lib/generated/prisma"
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL") // pooled, least-privilege app role
-  directUrl = env("DIRECT_URL") // unpooled, same app role (used only by the build-time drift check)
+  provider = "postgresql"
 }
 
 enum Player {
@@ -66,4 +68,14 @@ model Event {
   at          DateTime  @default(now())
 
   @@index([householdId, at])
+}
+
+// Fixed-window rate limiter (src/lib/server/rate-limit.ts), shared with tool-template.
+model RateLimitHit {
+  key         String
+  windowStart DateTime
+  count       Int      @default(1)
+
+  @@unique([key, windowStart])
+  @@index([windowStart])
 }

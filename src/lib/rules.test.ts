@@ -1,4 +1,4 @@
-import { test } from "node:test";
+import { test } from "vitest";
 import assert from "node:assert/strict";
 import {
   flip,
@@ -8,7 +8,7 @@ import {
   planRecordTonight,
   planUndoTonight,
   type NightRecord,
-} from "./rules.ts";
+} from "./rules";
 
 test("flip alternates players", () => {
   assert.equal(flip("A"), "B");
@@ -114,7 +114,7 @@ import {
   parseCorrection,
   retentionCutoff,
   windowStart,
-} from "./rules.ts";
+} from "./rules";
 
 test("addDays crosses month and year boundaries", () => {
   assert.equal(addDays("2026-10-01", -1), "2026-09-30");

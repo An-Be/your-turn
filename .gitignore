@@ -1,20 +1,36 @@
 # dependencies
-node_modules
+/node_modules
 
-# build output
-.next
-out
-next-env.d.ts
-*.tsbuildinfo
+# testing
+/coverage
 
-# secrets: every env file except the committed template
-.env
-.env.*
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+
+# env files: only the example is tracked
+.env*
 !.env.example
 
-# platform
+# vercel
 .vercel
 
-# os / editor
-.DS_Store
-*.log
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# prisma generated client
+/src/lib/generated/prisma
+
+# neon cli
+.neon

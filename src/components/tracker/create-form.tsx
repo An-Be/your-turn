@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { SectionLabel } from "@/components/site-chrome";
-import { cn } from "@/lib/utils";
+import { SectionLabel } from "@/components/ui/section-label";
+import { api } from "@/lib/api-client";
+import { NAME_MAX } from "@/lib/tracker-schema";
 import type { Player } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 export function CreateForm() {
   const router = useRouter();
@@ -18,24 +20,21 @@ export function CreateForm() {
 
   const ready = a.trim().length > 0 && b.trim().length > 0;
 
-  async function submit(e: React.FormEvent) {
+  async function submit(e: FormEvent) {
     e.preventDefault();
     if (!ready || busy) return;
     setBusy(true);
     setError(null);
-    try {
-      const res = await fetch("/api/households", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ playerAName: a, playerBName: b, starter }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Something went wrong.");
-      router.push(`/t/${data.token}?new=1`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong.");
+    const res = await api<{ token: string }>("/api/households", {
+      method: "POST",
+      body: { playerAName: a, playerBName: b, starter },
+    });
+    if (!res.ok) {
+      setError(res.error);
       setBusy(false);
+      return;
     }
+    router.push(`/t/${res.data.token}?new=1`);
   }
 
   return (
@@ -45,18 +44,20 @@ export function CreateForm() {
         <div className="flex flex-col">
           <Input
             aria-label="First player"
+            variant="display"
             placeholder="Andrea"
             value={a}
             onChange={(e) => setA(e.target.value)}
-            maxLength={24}
+            maxLength={NAME_MAX}
             autoComplete="off"
           />
           <Input
             aria-label="Second player"
+            variant="display"
             placeholder="Marta"
             value={b}
             onChange={(e) => setB(e.target.value)}
-            maxLength={24}
+            maxLength={NAME_MAX}
             autoComplete="off"
             className="-mt-px"
           />

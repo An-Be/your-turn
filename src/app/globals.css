@@ -1,17 +1,24 @@
 @import "tailwindcss";
 
-/* Tab Math visual language: monochrome, two voices, 1px borders, zero radius. */
+/*
+  Monochrome system shared by every tiny tool: two voices (Space Grotesk for
+  display, Geist Mono for everything else), 1px ink borders, zero radius,
+  numbered section labels. Change tokens here, never hard-code colors.
+*/
 @theme {
   --color-ink: #000000;
   --color-paper: #ffffff;
   --color-mute: #555555;
   --color-faint: #8a8a8a;
   --color-wash: #f2f2f2;
+  --color-line: #000000;
   --font-display: var(--font-space-grotesk), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  --radius-xs: 0px;
   --radius-sm: 0px;
   --radius-md: 0px;
   --radius-lg: 0px;
+  --radius-xl: 0px;
 }
 
 @layer base {
@@ -33,8 +40,19 @@
     outline: 2px solid var(--color-ink);
     outline-offset: 2px;
   }
+  /* Chrome defaults native buttons to cursor: default; preflight doesn't patch it. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="switch"]:not(:disabled),
+  summary {
+    cursor: pointer;
+  }
+  dialog::backdrop {
+    background: rgb(0 0 0 / 0.4);
+  }
 }
 
+/* Uppercase mono micro-label: section labels, metadata, small actions. */
 @utility label {
   font-family: var(--font-mono);
   font-size: 11px;
@@ -43,6 +61,7 @@
   text-transform: uppercase;
 }
 
+/* Tight display type for headlines and big numbers. */
 @utility display {
   font-family: var(--font-display);
   font-weight: 600;

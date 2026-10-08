@@ -15,9 +15,8 @@ const spaceGrotesk = localFont({
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Your Turn",
-  description: "Whose turn is it tonight? One shared link, no login.",
-  robots: { index: false, follow: false },
+  title: "TagYourTurn",
+  description: "Whose turn is it tonight? One shared link for two people. No login, no reminders, forgets after 7 days.",
 };
 
 export const viewport: Viewport = {

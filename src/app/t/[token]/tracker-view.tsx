@@ -5,16 +5,10 @@ import { Button } from "@/components/ui/button";
 import { SectionLabel, Shell, SiteFooter, SiteHeader } from "@/components/site-chrome";
 import { nameFor, type Player, type TrackerData } from "@/lib/types";
 import { DevicePrompt } from "./device-prompt";
+import { History, type Activity, type Night } from "./history";
 
 type DeviceChoice = Player | "skip";
-type Night = {
-  date: string;
-  starter: Player;
-  status: "DONE" | "SKIPPED";
-  appliedFlip: boolean;
-  recordedBy: Player | null;
-};
-type Pending = null | "done" | "skip" | "swap" | "undo" | "rotate";
+type Pending = null | "done" | "skip" | "swap" | "undo" | "rotate" | "history";
 
 // Keyed by household id, not token, so rotating the link doesn't re-prompt.
 const deviceKey = (id: string) => `yourturn:device:${id}`;
@@ -56,6 +50,11 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
   const [token, setToken] = useState(tracker.token);
   const [currentStarter, setCurrentStarter] = useState<Player>(tracker.currentStarter);
   const [tonight, setTonight] = useState<Night | null>(null);
+  const [history, setHistory] = useState<Night[]>([]);
+  const [activity, setActivity] = useState<Activity[]>([]);
+  const [split, setSplit] = useState<Record<Player, number>>({ A: 0, B: 0 });
+  const [windowDays, setWindowDays] = useState(7);
+  const [today, setToday] = useState("");
   const [synced, setSynced] = useState(false);
   const [pending, setPending] = useState<Pending>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -87,6 +86,11 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
       const data = await res.json();
       setCurrentStarter(data.currentStarter);
       setTonight(data.tonight);
+      setHistory(data.history ?? []);
+      setActivity(data.activity ?? []);
+      setSplit(data.split ?? { A: 0, B: 0 });
+      setWindowDays(data.windowDays ?? 7);
+      setToday(localToday());
       setSynced(true);
     } catch {
       // Offline: keep showing the last known state.
@@ -146,6 +150,7 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
       if (res.status === 201) {
         setCurrentStarter(data.currentStarter);
         setTonight(data.tonight);
+        refresh();
       } else if (res.status === 409 && data.existing) {
         const e: Night = data.existing;
         const who = e.recordedBy ? ` by ${names[e.recordedBy]}` : "";
@@ -168,8 +173,10 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
     try {
       const res = await post("/swap", { today: localToday(), recordedBy });
       const data = await res.json().catch(() => ({}));
-      if (res.ok) setCurrentStarter(data.currentStarter);
-      else setNotice(data.error ?? "Couldn't swap. Try again.");
+      if (res.ok) {
+        setCurrentStarter(data.currentStarter);
+        refresh();
+      } else setNotice(data.error ?? "Couldn't swap. Try again.");
     } catch {
       setNotice("You're offline. Nothing was saved.");
     } finally {
@@ -190,6 +197,7 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
       if (res.ok) {
         setCurrentStarter(data.currentStarter);
         setTonight(null);
+        refresh();
       } else if (res.status === 409) {
         await refresh();
       } else {
@@ -207,7 +215,7 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
     setPending("rotate");
     setNotice(null);
     try {
-      const res = await post("/rotate", { recordedBy });
+      const res = await post("/rotate", { today: localToday(), recordedBy });
       const data = await res.json().catch(() => ({}));
       if (res.ok && typeof data.token === "string") {
         setToken(data.token);
@@ -219,6 +227,34 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
       }
     } catch {
       setNotice("You're offline. The link was not changed.");
+    } finally {
+      setPending(null);
+    }
+  }
+
+  async function saveNight(d: { date: string; starter: Player; status: "DONE" | "SKIPPED"; isNew: boolean }) {
+    if (pending) return false;
+    setPending("history");
+    setNotice(null);
+    const t = localToday();
+    try {
+      const res = d.isNew
+        ? await post("/nights", { date: d.date, today: t, starter: d.starter, status: d.status, recordedBy })
+        : await fetch(`/api/households/${token}/nights/${d.date}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ today: t, starter: d.starter, status: d.status, recordedBy }),
+          });
+      const data = await res.json().catch(() => ({}));
+      await refresh();
+      if (!res.ok) {
+        setNotice(data.error ?? "Couldn't save. Try again.");
+        return false;
+      }
+      return true;
+    } catch {
+      setNotice("You're offline. Nothing was saved.");
+      return false;
     } finally {
       setPending(null);
     }
@@ -236,7 +272,7 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
 
   async function share() {
     try {
-      await navigator.share({ title: "Your Turn", text: "Whose turn is it tonight?", url });
+      await navigator.share({ title: "TagYourTurn", text: "Whose turn is it tonight? Here\u2019s our TagYourTurn link.", url });
     } catch {
       // User dismissed the share sheet.
     }
@@ -332,8 +368,21 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
           ) : null}
         </section>
 
+        {synced && today ? (
+          <History
+            today={today}
+            windowDays={windowDays}
+            history={history}
+            activity={activity}
+            split={split}
+            names={names}
+            busy={pending === "history"}
+            onSave={saveNight}
+          />
+        ) : null}
+
         <section>
-          <SectionLabel n="02">Link</SectionLabel>
+          <SectionLabel n="03">Link</SectionLabel>
           {linkNotice ? (
             <p className="mb-3 text-[13px] leading-relaxed">
               {linkNotice === "rotated"
@@ -383,7 +432,7 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
         </section>
 
         <section>
-          <SectionLabel n="03">This device</SectionLabel>
+          <SectionLabel n="04">This device</SectionLabel>
           <div className="flex items-center justify-between border border-ink px-4 py-3">
             <span className="font-display text-[18px] font-medium tracking-[-0.02em]">
               {!hydrated ? " " : recordedBy ? names[recordedBy] : "Not set"}

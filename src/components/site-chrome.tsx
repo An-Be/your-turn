@@ -6,7 +6,7 @@ export function SiteHeader({ right }: { right?: React.ReactNode }) {
     <header className="flex items-center gap-3 border-b border-ink py-4">
       <Link href="/" className="flex items-center gap-3">
         <Mark size={28} />
-        <span className="display text-[22px] leading-none">Your Turn</span>
+        <span className="display text-[22px] leading-none">TagYourTurn</span>
       </Link>
       {right ? <span className="label ml-auto text-mute">{right}</span> : null}
     </header>

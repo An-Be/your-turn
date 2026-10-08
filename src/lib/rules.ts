@@ -89,3 +89,62 @@ export function planUndoTonight(input: { currentStarter: Player; night: NightRec
     newStarter: input.night.appliedFlip ? flip(input.currentStarter) : input.currentStarter,
   };
 }
+
+// ---- 7-day window (M3) ----
+
+/** Number of calendar days in the fairness window and history, including today. */
+export const WINDOW_DAYS = 7;
+
+/** yyyy-mm-dd shifted by n days (UTC arithmetic on a calendar date, no timezone involved). */
+export function addDays(date: string, n: number): string {
+  const [y, m, d] = date.split("-").map(Number);
+  const t = new Date(Date.UTC(y, m - 1, d + n));
+  return t.toISOString().slice(0, 10);
+}
+
+/** First date inside the window that ends on `today` (inclusive). */
+export function windowStart(today: string): string {
+  return addDays(today, -(WINDOW_DAYS - 1));
+}
+
+export function isInWindow(date: string, today: string): boolean {
+  return date >= windowStart(today) && date <= today;
+}
+
+/** A past night inside the window: can be backfilled or corrected. Tonight uses Done/Skip/Undo instead. */
+export function isEditablePast(date: string, today: string): boolean {
+  return date < today && date >= windowStart(today);
+}
+
+/**
+ * Server-side retention cutoff. Nights dated before this are deleted.
+ * Clients can be up to one day ahead of UTC, so keep one extra day so no client
+ * ever loses a night that is still inside its own 7-day window.
+ */
+export function retentionCutoff(now: Date = new Date()): string {
+  const utcToday = now.toISOString().slice(0, 10);
+  return addDays(utcToday, -WINDOW_DAYS);
+}
+
+/** DONE nights per starter. Skipped nights don't count for anyone. */
+export function computeSplit(nights: Pick<NightRecord, "starter" | "status">[]): Record<Player, number> {
+  const split: Record<Player, number> = { A: 0, B: 0 };
+  for (const n of nights) if (n.status === "DONE") split[n.starter] += 1;
+  return split;
+}
+
+export type CorrectionPatch = { starter?: Player; status?: NightStatus };
+
+/** Validate a correction body. At least one field, each one valid. */
+export function parseCorrection(body: Record<string, unknown>): { ok: true; patch: CorrectionPatch } | { ok: false } {
+  const patch: CorrectionPatch = {};
+  if (body.starter !== undefined) {
+    if (!isPlayer(body.starter)) return { ok: false };
+    patch.starter = body.starter;
+  }
+  if (body.status !== undefined) {
+    if (body.status !== "DONE" && body.status !== "SKIPPED") return { ok: false };
+    patch.status = body.status;
+  }
+  return Object.keys(patch).length > 0 ? { ok: true, patch } : { ok: false };
+}

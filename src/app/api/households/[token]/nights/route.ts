@@ -1,9 +1,10 @@
-import { recordTonight } from "@/lib/tracker";
-import { isPlausibleToday, isValidDate, parseRecordedBy } from "@/lib/rules";
+import { backfillNight, recordTonight } from "@/lib/tracker";
+import { isEditablePast, isPlausibleToday, isPlayer, isValidDate, parseRecordedBy } from "@/lib/rules";
 import { badRequest, json, notFound, readJsonBody, rejectCrossSite } from "@/lib/http";
 
-// POST { date, today, status: "DONE" | "SKIPPED", recordedBy? }
-// M2 records tonight only (date === today). Backfill of past nights lands in M3.
+// POST { date, today, status: "DONE" | "SKIPPED", starter?, recordedBy? }
+// - date === today: record tonight (Done flips the starter, Skip doesn't).
+// - date in the last 6 days: backfill a forgotten night; `starter` required; never flips.
 export async function POST(req: Request, { params }: { params: Promise<{ token: string }> }) {
   const blocked = rejectCrossSite(req);
   if (blocked) return blocked;
@@ -14,16 +15,27 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
 
   const { date, today, status } = body;
   if (!isValidDate(date) || !isPlausibleToday(today as string)) return badRequest("Invalid date.");
-  if (date !== today) return badRequest("Only tonight can be recorded right now.");
   if (status !== "DONE" && status !== "SKIPPED") return badRequest("Invalid status.");
   const by = parseRecordedBy(body.recordedBy);
   if (!by.ok) return badRequest("Invalid recordedBy.");
-
   const { token } = await params;
-  const result = await recordTonight(token, date, status, by.value);
+
+  if (date === today) {
+    const result = await recordTonight(token, date, status, by.value);
+    if (result.kind === "not_found") return notFound();
+    if (result.kind === "conflict") {
+      return json({ error: "Tonight is already logged.", existing: result.existing }, 409);
+    }
+    return json({ currentStarter: result.currentStarter, tonight: result.tonight }, 201);
+  }
+
+  if (!isEditablePast(date, today as string)) return badRequest("Only the last 7 days can be logged.");
+  if (!isPlayer(body.starter)) return badRequest("Say who started that night.");
+
+  const result = await backfillNight(token, date, body.starter, status, by.value);
   if (result.kind === "not_found") return notFound();
   if (result.kind === "conflict") {
-    return json({ error: "Tonight is already logged.", existing: result.existing }, 409);
+    return json({ error: "That night is already logged.", existing: result.existing }, 409);
   }
-  return json({ currentStarter: result.currentStarter, tonight: result.tonight }, 201);
+  return json({ ok: true }, 201);
 }

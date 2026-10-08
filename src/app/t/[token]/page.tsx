@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export async function generateMetadata() {
   // Generic title so a shared/bookmarked link doesn't leak player names in previews.
-  return { title: "Your Turn" };
+  return { title: "TagYourTurn", robots: { index: false, follow: false } };
 }
 
 export default async function TrackerPage({

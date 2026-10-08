@@ -105,3 +105,63 @@ test("full week: done, skip, done, undo, done", () => {
   if (u.kind === "ok") starter = u.newStarter;
   assert.equal(starter, "B"); // back to B
 });
+
+import {
+  addDays,
+  computeSplit,
+  isEditablePast,
+  isInWindow,
+  parseCorrection,
+  retentionCutoff,
+  windowStart,
+} from "./rules.ts";
+
+test("addDays crosses month and year boundaries", () => {
+  assert.equal(addDays("2026-10-01", -1), "2026-09-30");
+  assert.equal(addDays("2026-12-31", 1), "2027-01-01");
+  assert.equal(addDays("2028-03-01", -1), "2028-02-29");
+});
+
+test("window is today plus the previous 6 days", () => {
+  assert.equal(windowStart("2026-10-08"), "2026-10-02");
+  assert.ok(isInWindow("2026-10-02", "2026-10-08"));
+  assert.ok(isInWindow("2026-10-08", "2026-10-08"));
+  assert.equal(isInWindow("2026-10-01", "2026-10-08"), false);
+  assert.equal(isInWindow("2026-10-09", "2026-10-08"), false);
+});
+
+test("only past nights inside the window are editable", () => {
+  assert.ok(isEditablePast("2026-10-07", "2026-10-08"));
+  assert.ok(isEditablePast("2026-10-02", "2026-10-08"));
+  assert.equal(isEditablePast("2026-10-08", "2026-10-08"), false); // tonight: use Undo
+  assert.equal(isEditablePast("2026-10-01", "2026-10-08"), false); // already forgotten
+});
+
+test("retention keeps every date any client can still see", () => {
+  const now = new Date("2026-10-08T02:00:00Z"); // Chicago is still on the 7th
+  const cutoff = retentionCutoff(now);
+  assert.equal(cutoff, "2026-10-01");
+  // A Chicago client on the 7th sees 10-01..10-07; nothing it can see is deleted.
+  assert.ok(windowStart("2026-10-07") >= cutoff);
+  // A client a day ahead (10-09) sees 10-03..10-09, also fine.
+  assert.ok(windowStart("2026-10-09") >= cutoff);
+});
+
+test("split counts DONE nights by starter only", () => {
+  const split = computeSplit([
+    { starter: "A", status: "DONE" },
+    { starter: "A", status: "DONE" },
+    { starter: "B", status: "DONE" },
+    { starter: "B", status: "SKIPPED" },
+    { starter: "A", status: "SKIPPED" },
+  ]);
+  assert.deepEqual(split, { A: 2, B: 1 });
+});
+
+test("parseCorrection requires at least one valid field", () => {
+  assert.deepEqual(parseCorrection({ starter: "B" }), { ok: true, patch: { starter: "B" } });
+  assert.deepEqual(parseCorrection({ status: "SKIPPED" }), { ok: true, patch: { status: "SKIPPED" } });
+  assert.deepEqual(parseCorrection({}), { ok: false });
+  assert.deepEqual(parseCorrection({ starter: "C" }), { ok: false });
+  assert.deepEqual(parseCorrection({ status: "done" }), { ok: false });
+});

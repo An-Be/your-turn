@@ -1,0 +1,69 @@
+// Full schema for M1–M3, so later milestones need no migration churn.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // pooled, least-privilege app role
+  directUrl = env("DIRECT_URL") // unpooled, same app role (used only by the build-time drift check)
+}
+
+enum Player {
+  A
+  B
+}
+
+enum NightStatus {
+  DONE
+  SKIPPED
+}
+
+enum EventType {
+  DONE
+  SKIP
+  SWAP
+  UNDO
+  CORRECT
+  BACKFILL
+  ROTATE
+}
+
+model Household {
+  id             String   @id @default(cuid())
+  token          String   @unique
+  playerAName    String
+  playerBName    String
+  currentStarter Player   @default(A)
+  createdAt      DateTime @default(now())
+  nights         Night[]
+  events         Event[]
+}
+
+model Night {
+  id          String      @id @default(cuid())
+  householdId String
+  household   Household   @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  date        String      @db.Char(10) // yyyy-mm-dd, client-local
+  starter     Player
+  status      NightStatus
+  appliedFlip Boolean     @default(false) // did this write flip currentStarter? Undo reverses only this.
+  recordedBy  Player?
+  recordedAt  DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@unique([householdId, date])
+}
+
+model Event {
+  id          String    @id @default(cuid())
+  householdId String
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  type        EventType
+  date        String?   @db.Char(10)
+  by          Player?
+  at          DateTime  @default(now())
+
+  @@index([householdId, at])
+}

@@ -1,0 +1,20 @@
+# dependencies
+node_modules
+
+# build output
+.next
+out
+next-env.d.ts
+*.tsbuildinfo
+
+# secrets: every env file except the committed template
+.env
+.env.*
+!.env.example
+
+# platform
+.vercel
+
+# os / editor
+.DS_Store
+*.log

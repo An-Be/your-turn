@@ -2,7 +2,7 @@
 
 Whose turn is it tonight? One shared link for two people, no login. See `SPEC.md` for the full v2 spec.
 
-**Status: M1.** Create a tracker, open the secret link, see tonight's starter, pick which player this device is. Done/Skip/Swap/Undo land in M2.
+**Status: M2.** Create a tracker, share the secret link, and each night tap Done (flips the starter), Skip (keeps it), Swap, or Undo. Rotate link kills the old URL. History, corrections, backfill and the 30-day split land in M3.
 
 ## Run it
 
@@ -10,6 +10,7 @@ Whose turn is it tonight? One shared link for two people, no login. See `SPEC.md
 npm install                 # also runs prisma generate
 cp .env.example .env        # paste the yourturn_app pooled + direct URLs
 npm run dev
+npm test                    # turn-rule unit tests
 ```
 
 Production runs on Vercel (region `cle1`, next to Neon `aws-us-east-2`). `DATABASE_URL` and `DIRECT_URL` are set as Sensitive env vars in Vercel, Production only.
@@ -22,6 +23,8 @@ Production runs on Vercel (region `cle1`, next to Neon `aws-us-east-2`). `DATABA
 - **Drift check on every build.** `npm run db:check` compares the live database to `schema.prisma` and fails the build if they differ.
 - **The link is the credential.** Tokens are 128-bit random (base62). `Referrer-Policy: no-referrer` keeps the URL from leaking to other sites; `/t/*` and `/api/*` are `no-store` and `noindex`; page titles never include names.
 - **Headers.** Nonce-based CSP (`src/middleware.ts`), HSTS, `X-Frame-Options: DENY`, `nosniff`, restrictive `Permissions-Policy`, `X-Powered-By` removed.
+- **Concurrency.** Every mutation locks the household row (`SELECT ... FOR UPDATE`) inside a transaction, so two phones tapping at once are applied one after the other. One record per night is also enforced by a unique index.
+- **CSRF.** Mutations require `Content-Type: application/json` and a same-origin `Origin`; the undo `DELETE` checks `Sec-Fetch-Site`/`Origin`.
 - **Input limits.** Names are trimmed, 1 to 24 chars; request bodies over 2 KB are rejected; tokens are format-checked before any query.
 - **Secrets never committed.** `.gitignore` excludes every `.env*` except `.env.example`.
 

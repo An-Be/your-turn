@@ -1,12 +1,16 @@
-import { NextResponse } from "next/server";
-import { getTracker } from "@/lib/household";
+import { getTonightState } from "@/lib/tracker";
+import { isPlausibleToday } from "@/lib/rules";
+import { badRequest, json, notFound } from "@/lib/http";
 
-// M1: tonight's starter + names. History and 30-day split land in M3.
-export async function GET(_req: Request, { params }: { params: Promise<{ token: string }> }) {
+// GET ?today=yyyy-mm-dd → names, current starter, tonight's record (if any).
+export async function GET(req: Request, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
-  const tracker = await getTracker(token);
-  if (!tracker) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  const today = new URL(req.url).searchParams.get("today") ?? "";
+  if (!isPlausibleToday(today)) return badRequest("Invalid date.");
 
-  const { id, playerAName, playerBName, currentStarter } = tracker;
-  return NextResponse.json({ id, playerAName, playerBName, currentStarter });
+  const state = await getTonightState(token, today);
+  if (!state) return notFound();
+
+  const { householdId: _id, ...publicState } = state;
+  return json(publicState);
 }

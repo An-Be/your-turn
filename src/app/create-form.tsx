@@ -53,7 +53,7 @@ export function CreateForm() {
           />
           <Input
             aria-label="Second player"
-            placeholder="Marta"
+            placeholder="Sabrina"
             value={b}
             onChange={(e) => setB(e.target.value)}
             maxLength={24}

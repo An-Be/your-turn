@@ -16,7 +16,17 @@ export function SiteHeader({ right }: { right?: React.ReactNode }) {
 export function SiteFooter() {
   return (
     <footer className="mt-auto border-t border-ink py-5">
-      <p className="label text-mute">Tiny tools for keeping things fair.</p>
+      <p className="label text-mute">
+        Built by{" "}
+        <a
+          href="https://andreaberrocal.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-ink underline decoration-1 underline-offset-4 hover:text-mute"
+        >
+          Andrea
+        </a>
+      </p>
     </footer>
   );
 }

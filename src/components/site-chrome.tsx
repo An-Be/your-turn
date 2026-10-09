@@ -16,7 +16,8 @@ export function SiteHeader({ right }: { right?: React.ReactNode }) {
 export function SiteFooter() {
   return (
     <footer className="mt-auto border-t border-ink py-5">
-      <p className="label text-mute">
+      <p className="label text-mute">Tiny tools for keeping a rhythm.</p>
+      <p className="label mt-2 text-mute">
         Built by{" "}
         <a
           href="https://andreaberrocal.com"

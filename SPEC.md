@@ -93,4 +93,4 @@ A shared ledger can become evidence, so TagYourTurn is designed against that fro
 - **Nothing leaves.** No exporting, no sharing the log. History shows dates, never times.
 
 ## 13. Visual language (shared with Tab Math)
-Monochrome only. Space Grotesk headings, Geist Mono for everything else. Zero radius, 1px borders, numbered section labels. Footer: "Built by Andrea", linking to andreaberrocal.com.
+Monochrome only. Space Grotesk headings, Geist Mono for everything else. Zero radius, 1px borders, numbered section labels. Footer: "Tiny tools for keeping a rhythm." then "Built by Andrea", linking to andreaberrocal.com.

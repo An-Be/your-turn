@@ -8,7 +8,9 @@ export default function manifest(): MetadataRoute.Manifest {
     name: site.name,
     short_name: site.name,
     description: site.description,
-    start_url: "/",
+    // No start_url on purpose: it then defaults to the page the person was on
+    // when they tapped "Add to Home Screen", so the icon opens their own
+    // tracker (/t/<token>) instead of the home page. Don't add one back.
     display: "standalone",
     background_color: site.themeColor,
     theme_color: site.themeColor,

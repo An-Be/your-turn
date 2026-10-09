@@ -343,7 +343,7 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
             {!tonight ? (
               <>
                 <Button size="lg" onClick={() => record("DONE")} disabled={busy || !synced}>
-                  {pending === "done" ? "Saving…" : "Done for tonight"}
+                  {pending === "done" ? "Saving…" : "Done for today"}
                 </Button>
                 <div className="-mt-px grid grid-cols-2">
                   <Button variant="outline" size="lg" onClick={() => record("SKIPPED")} disabled={busy || !synced}>

@@ -8,6 +8,7 @@ import { SectionLabel } from "@/components/ui/section-label";
 import { Shell } from "@/components/ui/shell";
 import { api } from "@/lib/api-client";
 import { copyToClipboard } from "@/lib/clipboard";
+import { forgetTracker, saveTracker } from "@/lib/saved-tracker";
 import { nameFor, type Player, type TrackerData } from "@/lib/types";
 import { DevicePrompt } from "./device-prompt";
 import { History, type Activity, type Night } from "./history";
@@ -103,7 +104,11 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
   const refresh = useCallback(async () => {
     const res = await api<TrackerSnapshot>(`/api/households/${tokenRef.current}?today=${localToday()}`, { method: "GET" });
     if (!res.ok) {
-      if (res.status === 404) setNotice("This link no longer works. It may have been rotated on the other phone.");
+      if (res.status === 404) {
+        setNotice("This link no longer works. It may have been rotated on the other phone.");
+        // Don't keep offering a dead link on the home page.
+        forgetTracker(tokenRef.current);
+      }
       // Offline or a server hiccup: keep showing the last known state.
       return;
     }
@@ -130,6 +135,8 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
     setOrigin(window.location.origin);
     setCanShare(typeof navigator.share === "function");
     if (justCreated) window.history.replaceState(null, "", `/t/${tracker.token}`);
+    // Remember this tracker on this phone so the home page can offer a way back.
+    saveTracker({ token: tracker.token, playerAName: tracker.playerAName, playerBName: tracker.playerBName });
 
     refresh();
     // Keep both phones in step: refresh when the tab comes back and every 30s while visible.
@@ -147,7 +154,7 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
       document.removeEventListener("visibilitychange", onVisible);
       window.clearInterval(timer);
     };
-  }, [tracker.id, tracker.token, justCreated, refresh]);
+  }, [tracker.id, tracker.token, tracker.playerAName, tracker.playerBName, justCreated, refresh]);
 
   function pick(v: DeviceChoice) {
     writeDevice(tracker.id, v);
@@ -222,6 +229,7 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
     if (res.ok && typeof res.data.token === "string") {
       setToken(res.data.token);
       window.history.replaceState(null, "", `/t/${res.data.token}`);
+      saveTracker({ token: res.data.token, playerAName: tracker.playerAName, playerBName: tracker.playerBName });
       setLinkNotice("rotated");
       setConfirmRotate(false);
     } else if (!res.ok) {
@@ -273,6 +281,21 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
       <SiteHeader right={todayLabel || " "} />
 
       <main className="flex flex-col gap-10 py-8">
+        {linkNotice === "created" ? (
+          <section className="border-2 border-ink">
+            <p className="px-4 pt-4 text-[13px] leading-relaxed">
+              <span className="font-display text-[18px] font-medium tracking-[-0.02em]">Save your link.</span>
+              <br />
+              There&apos;s no login, so this link is the only way back to this tracker. Copy it somewhere safe and send
+              it to {recipient}.
+            </p>
+            <div className="p-4">
+              <Button block onClick={copy}>
+                {copied ? "Copied" : "Copy link"}
+              </Button>
+            </div>
+          </section>
+        ) : null}
         <section aria-live="polite">
           <SectionLabel n="01" aside={tonight ? (tonight.status === "DONE" ? "Done" : "Skipped") : undefined}>
             Today
@@ -373,10 +396,14 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
           {linkNotice ? (
             <p className="mb-3 text-[13px] leading-relaxed">
               {linkNotice === "rotated"
-                ? `New link. The old one no longer works, so send this to ${recipient}.`
-                : `Send this to ${recipient}. The link is the only key, so keep it between you two.`}
+                ? `New link. The old one no longer works, so save this one and send it to ${recipient}.`
+                : `Save this link and send it to ${recipient}. There's no login, so it's the only way back to this tracker. Keep it between you two.`}
             </p>
-          ) : null}
+          ) : (
+            <p className="mb-3 text-[12px] leading-relaxed text-mute">
+              This link is the only way back. Bookmark it or add it to your Home Screen.
+            </p>
+          )}
           <div className="border border-ink">
             <div className="truncate px-4 py-3 text-[12px] text-mute" title={url}>
               {url || " "}

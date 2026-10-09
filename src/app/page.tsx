@@ -1,11 +1,12 @@
 import { SiteFooter } from "@/components/site/site-footer";
 import { SiteHeader } from "@/components/site/site-header";
 import { CreateForm } from "@/components/tracker/create-form";
+import { SavedTrackerCard } from "@/components/tracker/saved-tracker-card";
 import { SectionLabel } from "@/components/ui/section-label";
 import { Shell } from "@/components/ui/shell";
 
 const STEPS = [
-  ["Make a tracker", "Two names in, one secret link out. Send it to the other person."],
+  ["Make a tracker", "Two names in, one secret link out. Save it and send it to the other person."],
   ["Check today", "The page shows who starts. Same answer on both phones."],
   ["Tap Done", "It flips for next time. Skip a day and nothing flips."],
 ] as const;
@@ -29,6 +30,8 @@ export default function Home() {
             done, and settles &ldquo;wait, who went last time?&rdquo;
           </p>
         </div>
+
+        <SavedTrackerCard />
 
         <CreateForm />
 

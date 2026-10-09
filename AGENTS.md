@@ -188,6 +188,11 @@ Sensitive, Production only. Grants are in `prisma/sql/app-role.sql`.
 - The device choice ("which player is this phone") is stored in `localStorage`
   under the household id, so rotating the link doesn't re-prompt. It's a
   convenience label only and never trusted by the server.
+- The last tracker opened on a phone (its link and the two names) is saved in
+  `localStorage` (`src/lib/saved-tracker.ts`) so the home page can show "Open
+  your tracker". It's a copy of the link on that device only, like browser
+  history; the server never sees it. Rotating updates it, a 404 clears it, and
+  "Not yours? Forget it on this phone" removes it.
 - The landing page is indexable (`site.indexable: true`); tracker pages are not.
 - `tracker-view.tsx` syncs browser-only state in one effect after hydration
   (one documented `react-hooks/set-state-in-effect` disable).

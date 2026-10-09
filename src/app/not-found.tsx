@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { SiteFooter } from "@/components/site/site-footer";
 import { SiteHeader } from "@/components/site/site-header";
+import { ForgetDeadLink } from "@/components/tracker/forget-dead-link";
 import { buttonVariants } from "@/components/ui/button";
 import { Shell } from "@/components/ui/shell";
 
@@ -18,6 +19,7 @@ export default function NotFound() {
         </Link>
       </main>
       <SiteFooter />
+      <ForgetDeadLink />
     </Shell>
   );
 }

@@ -23,7 +23,7 @@ function shiftDate(date: string, n: number): string {
 }
 
 function dayLabel(date: string, today: string): string {
-  if (date === today) return "Tonight";
+  if (date === today) return "Today";
   if (date === shiftDate(today, -1)) return "Yesterday";
   const [y, m, d] = date.split("-").map(Number);
   const dt = new Date(y, m - 1, d);

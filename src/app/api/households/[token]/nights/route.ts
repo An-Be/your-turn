@@ -24,7 +24,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
     const result = await recordTonight(token, date, status, by.value);
     if (result.kind === "not_found") return notFound();
     if (result.kind === "conflict") {
-      return json({ error: "Tonight is already logged.", existing: result.existing }, 409);
+      return json({ error: "Today is already logged.", existing: result.existing }, 409);
     }
     return json({ currentStarter: result.currentStarter, tonight: result.tonight }, 201);
   }

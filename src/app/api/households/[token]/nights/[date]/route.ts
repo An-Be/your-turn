@@ -18,7 +18,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
   const today = body.today as string;
   if (!isValidDate(date) || !isPlausibleToday(today)) return badRequest("Invalid date.");
   if (!isEditablePast(date, today)) {
-    return badRequest(date === today ? "Use Undo for tonight." : "Only the last 7 days can be corrected.");
+    return badRequest(date === today ? "Use Undo for today." : "Only the last 7 days can be corrected.");
   }
   const parsed = parseCorrection(body);
   if (!parsed.ok) return badRequest("Nothing valid to change.");
@@ -41,7 +41,7 @@ export async function DELETE(req: Request, { params }: Ctx) {
   const sp = new URL(req.url).searchParams;
   const today = sp.get("today") ?? "";
   if (!isValidDate(date) || !isPlausibleToday(today)) return badRequest("Invalid date.");
-  if (date !== today) return badRequest("Only tonight can be undone.");
+  if (date !== today) return badRequest("Only today can be undone.");
   const by = parseRecordedBy(sp.get("by") ?? undefined);
   if (!by.ok) return badRequest("Invalid by.");
 

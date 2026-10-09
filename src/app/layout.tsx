@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "TagYourTurn",
-  description: "Whose turn is it tonight? One shared link for two people. No login, no reminders, forgets after 7 days.",
+  description: "Whose turn is it today? One shared link for two people. No login, no reminders, forgets after 7 days.",
 };
 
 export const viewport: Viewport = {

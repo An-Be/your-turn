@@ -1,8 +1,8 @@
 import type { MetadataRoute } from "next";
 import { site } from "@/config/site";
 
-// Add PNG icons (192, 512, maskable) to public/ once the tool has a real mark;
-// see docs/new-tool.md.
+// PNGs are rendered from src/app/icon.svg (the mark). iOS and most launchers
+// ignore SVG icons, so the PNG and maskable sizes are what the Home Screen uses.
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: site.name,
@@ -12,6 +12,12 @@ export default function manifest(): MetadataRoute.Manifest {
     display: "standalone",
     background_color: site.themeColor,
     theme_color: site.themeColor,
-    icons: [{ src: "/icon.svg", sizes: "any", type: "image/svg+xml" }],
+    icons: [
+      { src: "/icon.svg", sizes: "any", type: "image/svg+xml" },
+      { src: "/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: "/icon-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+      { src: "/icon-maskable-192.png", sizes: "192x192", type: "image/png", purpose: "maskable" },
+      { src: "/icon-maskable-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+    ],
   };
 }

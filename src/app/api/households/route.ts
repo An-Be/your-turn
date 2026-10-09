@@ -1,25 +1,25 @@
-import { db } from "@/lib/db";
-import { newToken } from "@/lib/token";
-import { cleanName } from "@/lib/household";
-import { badRequest, json, readJsonBody, rejectCrossSite } from "@/lib/http";
+import { getClientIp } from "@/lib/server/client-ip";
+import { db } from "@/lib/server/db";
+import { json, parseJsonBody, rejectCrossSite, tooManyRequests } from "@/lib/server/http";
+import { checkRateLimit } from "@/lib/server/rate-limit";
+import { newToken } from "@/lib/server/token";
+import { createHouseholdSchema, MAX_BODY_BYTES } from "@/lib/tracker-schema";
 
 // POST { playerAName, playerBName, starter } → { token, url }
 export async function POST(req: Request) {
   const blocked = rejectCrossSite(req);
   if (blocked) return blocked;
 
-  const body = await readJsonBody(req);
-  if (body === "too_large") return json({ error: "Request too large." }, 413);
-  if (!body) return badRequest("Invalid JSON.");
+  const limit = await checkRateLimit(`household:create:${getClientIp(req)}`, { limit: 20, windowSeconds: 3600 });
+  if (!limit.allowed) return tooManyRequests(limit.retryAfterSeconds);
 
-  const a = cleanName(body.playerAName);
-  const b = cleanName(body.playerBName);
-  const starter = body.starter === "B" ? "B" : "A";
-  if (!a || !b) return badRequest("Both names are required (24 characters max).");
+  const body = await parseJsonBody(req, createHouseholdSchema, MAX_BODY_BYTES);
+  if (!body.ok) return body.response;
+  const { playerAName, playerBName, starter } = body.data;
 
   const token = newToken();
   await db.household.create({
-    data: { token, playerAName: a, playerBName: b, currentStarter: starter },
+    data: { token, playerAName, playerBName, currentStarter: starter },
   });
 
   const origin = new URL(req.url).origin;

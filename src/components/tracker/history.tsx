@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { SectionLabel } from "@/components/site-chrome";
+import { SectionLabel } from "@/components/ui/section-label";
 import { cn } from "@/lib/utils";
 import type { Player } from "@/lib/types";
 
@@ -104,7 +104,7 @@ export function History({
   const activityFor = (date: string) => activity.filter((a) => a.date === date);
 
   function open(date: string) {
-    if (date === today) return; // tonight is handled by Done / Skip / Undo above
+    if (date === today) return; // today is handled by Done / Skip / Undo above
     const n = byDate.get(date);
     setDraft(
       n

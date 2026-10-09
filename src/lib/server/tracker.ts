@@ -1,5 +1,5 @@
 import "server-only";
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/lib/generated/prisma/client";
 import { db } from "./db";
 import { isWellFormedToken, newToken } from "./token";
 import {
@@ -14,7 +14,7 @@ import {
   type NightRecord,
   type NightStatus,
   type Player,
-} from "./rules";
+} from "@/lib/rules";
 
 type Tx = Prisma.TransactionClient;
 

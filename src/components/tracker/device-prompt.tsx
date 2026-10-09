@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Mark } from "@/components/mark";
+import { Mark } from "@/components/site/mark";
 import type { Player } from "@/lib/types";
 
 export function DevicePrompt({

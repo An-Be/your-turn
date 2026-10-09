@@ -1,11 +1,33 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { SiteFooter } from "@/components/site/site-footer";
+import { SiteHeader } from "@/components/site/site-header";
 import { Button } from "@/components/ui/button";
-import { SectionLabel, Shell, SiteFooter, SiteHeader } from "@/components/site-chrome";
+import { SectionLabel } from "@/components/ui/section-label";
+import { Shell } from "@/components/ui/shell";
+import { api } from "@/lib/api-client";
+import { copyToClipboard } from "@/lib/clipboard";
 import { nameFor, type Player, type TrackerData } from "@/lib/types";
 import { DevicePrompt } from "./device-prompt";
 import { History, type Activity, type Night } from "./history";
+
+type TrackerSnapshot = {
+  currentStarter: Player;
+  tonight: Night | null;
+  history?: Night[];
+  activity?: Activity[];
+  split?: Record<Player, number>;
+  windowDays?: number;
+};
+
+/** The conflicting record a 409 carries, if any. */
+function existingFrom(body: unknown): Night | null {
+  if (body && typeof body === "object" && "existing" in body && body.existing && typeof body.existing === "object") {
+    return body.existing as Night;
+  }
+  return null;
+}
 
 type DeviceChoice = Player | "skip";
 type Pending = null | "done" | "skip" | "swap" | "undo" | "rotate" | "history";
@@ -69,36 +91,38 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
   const [copied, setCopied] = useState(false);
   const [canShare, setCanShare] = useState(false);
 
+  // refresh() reads the latest token without being re-created on every rotate.
   const tokenRef = useRef(token);
-  tokenRef.current = token;
+  useEffect(() => {
+    tokenRef.current = token;
+  }, [token]);
 
   const recordedBy: Player | null = device === "A" || device === "B" ? device : null;
   const url = origin ? `${origin}/t/${token}` : "";
 
   const refresh = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/households/${tokenRef.current}?today=${localToday()}`, { cache: "no-store" });
-      if (res.status === 404) {
-        setNotice("This link no longer works. It may have been rotated on the other phone.");
-        return;
-      }
-      if (!res.ok) return;
-      const data = await res.json();
-      setCurrentStarter(data.currentStarter);
-      setTonight(data.tonight);
-      setHistory(data.history ?? []);
-      setActivity(data.activity ?? []);
-      setSplit(data.split ?? { A: 0, B: 0 });
-      setWindowDays(data.windowDays ?? 7);
-      setToday(localToday());
-      setSynced(true);
-    } catch {
-      // Offline: keep showing the last known state.
+    const res = await api<TrackerSnapshot>(`/api/households/${tokenRef.current}?today=${localToday()}`, { method: "GET" });
+    if (!res.ok) {
+      if (res.status === 404) setNotice("This link no longer works. It may have been rotated on the other phone.");
+      // Offline or a server hiccup: keep showing the last known state.
+      return;
     }
+    const data = res.data;
+    setCurrentStarter(data.currentStarter);
+    setTonight(data.tonight);
+    setHistory(data.history ?? []);
+    setActivity(data.activity ?? []);
+    setSplit(data.split ?? { A: 0, B: 0 });
+    setWindowDays(data.windowDays ?? 7);
+    setToday(localToday());
+    setSynced(true);
   }, []);
 
   useEffect(() => {
+    // Device choice, origin and the local date only exist in the browser. Reading
+    // them here, after hydration, keeps server and client HTML identical.
     const d = readDevice(tracker.id);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time sync from browser-only state
     setDevice(d);
     setPromptOpen(d === null);
     setHydrated(true);
@@ -131,12 +155,8 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
     setPromptOpen(false);
   }
 
-  async function post(path: string, body: Record<string, unknown>) {
-    return fetch(`/api/households/${token}${path}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+  function post<T>(path: string, body: Record<string, unknown>) {
+    return api<T>(`/api/households/${token}${path}`, { method: "POST", body });
   }
 
   async function record(status: "DONE" | "SKIPPED") {
@@ -144,44 +164,34 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
     setPending(status === "DONE" ? "done" : "skip");
     setNotice(null);
     const today = localToday();
-    try {
-      const res = await post("/nights", { date: today, today, status, recordedBy });
-      const data = await res.json().catch(() => ({}));
-      if (res.status === 201) {
-        setCurrentStarter(data.currentStarter);
-        setTonight(data.tonight);
-        refresh();
-      } else if (res.status === 409 && data.existing) {
-        const e: Night = data.existing;
-        const who = e.recordedBy ? ` by ${names[e.recordedBy]}` : "";
-        setNotice(`Already logged as ${e.status === "DONE" ? "done" : "skipped"}${who}.`);
-        await refresh();
-      } else {
-        setNotice(data.error ?? "Couldn't save. Try again.");
-      }
-    } catch {
-      setNotice("You're offline. Nothing was saved.");
-    } finally {
-      setPending(null);
+    const res = await post<{ currentStarter: Player; tonight: Night }>("/nights", { date: today, today, status, recordedBy });
+    if (res.ok) {
+      setCurrentStarter(res.data.currentStarter);
+      setTonight(res.data.tonight);
+      refresh();
+    } else if (res.status === 409 && existingFrom(res.body)) {
+      const e = existingFrom(res.body) as Night;
+      const who = e.recordedBy ? ` by ${names[e.recordedBy]}` : "";
+      setNotice(`Already logged as ${e.status === "DONE" ? "done" : "skipped"}${who}.`);
+      await refresh();
+    } else {
+      setNotice(res.status === 0 ? "You're offline. Nothing was saved." : res.error);
     }
+    setPending(null);
   }
 
   async function swap() {
     if (pending) return;
     setPending("swap");
     setNotice(null);
-    try {
-      const res = await post("/swap", { today: localToday(), recordedBy });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok) {
-        setCurrentStarter(data.currentStarter);
-        refresh();
-      } else setNotice(data.error ?? "Couldn't swap. Try again.");
-    } catch {
-      setNotice("You're offline. Nothing was saved.");
-    } finally {
-      setPending(null);
+    const res = await post<{ currentStarter: Player }>("/swap", { today: localToday(), recordedBy });
+    if (res.ok) {
+      setCurrentStarter(res.data.currentStarter);
+      refresh();
+    } else {
+      setNotice(res.status === 0 ? "You're offline. Nothing was saved." : res.error);
     }
+    setPending(null);
   }
 
   async function undo() {
@@ -191,45 +201,33 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
     const today = localToday();
     const qs = new URLSearchParams({ today });
     if (recordedBy) qs.set("by", recordedBy);
-    try {
-      const res = await fetch(`/api/households/${token}/nights/${today}?${qs}`, { method: "DELETE" });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok) {
-        setCurrentStarter(data.currentStarter);
-        setTonight(null);
-        refresh();
-      } else if (res.status === 409) {
-        await refresh();
-      } else {
-        setNotice(data.error ?? "Couldn't undo. Try again.");
-      }
-    } catch {
-      setNotice("You're offline. Nothing was changed.");
-    } finally {
-      setPending(null);
+    const res = await api<{ currentStarter: Player }>(`/api/households/${token}/nights/${today}?${qs}`, { method: "DELETE" });
+    if (res.ok) {
+      setCurrentStarter(res.data.currentStarter);
+      setTonight(null);
+      refresh();
+    } else if (res.status === 409) {
+      await refresh();
+    } else {
+      setNotice(res.status === 0 ? "You're offline. Nothing was changed." : res.error);
     }
+    setPending(null);
   }
 
   async function rotate() {
     if (pending) return;
     setPending("rotate");
     setNotice(null);
-    try {
-      const res = await post("/rotate", { today: localToday(), recordedBy });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok && typeof data.token === "string") {
-        setToken(data.token);
-        window.history.replaceState(null, "", `/t/${data.token}`);
-        setLinkNotice("rotated");
-        setConfirmRotate(false);
-      } else {
-        setNotice(data.error ?? "Couldn't rotate the link. Try again.");
-      }
-    } catch {
-      setNotice("You're offline. The link was not changed.");
-    } finally {
-      setPending(null);
+    const res = await post<{ token: string }>("/rotate", { today: localToday(), recordedBy });
+    if (res.ok && typeof res.data.token === "string") {
+      setToken(res.data.token);
+      window.history.replaceState(null, "", `/t/${res.data.token}`);
+      setLinkNotice("rotated");
+      setConfirmRotate(false);
+    } else if (!res.ok) {
+      setNotice(res.status === 0 ? "You're offline. The link was not changed." : res.error);
     }
+    setPending(null);
   }
 
   async function saveNight(d: { date: string; starter: Player; status: "DONE" | "SKIPPED"; isNew: boolean }) {
@@ -237,37 +235,26 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
     setPending("history");
     setNotice(null);
     const t = localToday();
-    try {
-      const res = d.isNew
-        ? await post("/nights", { date: d.date, today: t, starter: d.starter, status: d.status, recordedBy })
-        : await fetch(`/api/households/${token}/nights/${d.date}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ today: t, starter: d.starter, status: d.status, recordedBy }),
-          });
-      const data = await res.json().catch(() => ({}));
-      await refresh();
-      if (!res.ok) {
-        setNotice(data.error ?? "Couldn't save. Try again.");
-        return false;
-      }
-      return true;
-    } catch {
-      setNotice("You're offline. Nothing was saved.");
+    const res = d.isNew
+      ? await post("/nights", { date: d.date, today: t, starter: d.starter, status: d.status, recordedBy })
+      : await api(`/api/households/${token}/nights/${d.date}`, {
+          method: "PATCH",
+          body: { today: t, starter: d.starter, status: d.status, recordedBy },
+        });
+    if (res.status !== 0) await refresh();
+    setPending(null);
+    if (!res.ok) {
+      setNotice(res.status === 0 ? "You're offline. Nothing was saved." : res.error);
       return false;
-    } finally {
-      setPending(null);
     }
+    return true;
   }
 
   async function copy() {
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1600);
-    } catch {
-      // Clipboard blocked; the URL is visible and selectable.
-    }
+    // Falls back to execCommand on plain-http LAN testing; if both fail, the URL stays visible and selectable.
+    if (!(await copyToClipboard(url))) return;
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1600);
   }
 
   async function share() {

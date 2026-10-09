@@ -1,5 +1,5 @@
-import { timingSafeEqual } from "crypto";
-import { purgeAllExpired } from "@/lib/tracker";
+import { timingSafeEqual } from "node:crypto";
+import { purgeAllExpired } from "@/lib/server/tracker";
 
 // Daily retention job (see vercel.json). Vercel sends `Authorization: Bearer $CRON_SECRET`.
 // Deletes every night and activity entry that has left the 7-day window.

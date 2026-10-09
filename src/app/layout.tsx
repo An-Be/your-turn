@@ -1,6 +1,10 @@
 import type { Metadata, Viewport } from "next";
+import type { ReactNode } from "react";
 import localFont from "next/font/local";
 import { GeistMono } from "geist/font/mono";
+import { connection } from "next/server";
+import { Toaster } from "@/components/ui/toaster";
+import { site } from "@/config/site";
 import "./globals.css";
 
 // Fonts are bundled locally so builds never depend on Google Fonts being reachable.
@@ -11,24 +15,28 @@ const spaceGrotesk = localFont({
   display: "swap",
 });
 
-// Nonce-based CSP (src/middleware.ts) needs every page rendered per request.
-export const dynamic = "force-dynamic";
-
 export const metadata: Metadata = {
-  title: "TagYourTurn",
-  description: "Whose turn is it today? One shared link for two people. No login, no reminders, forgets after 7 days.",
+  title: site.name,
+  description: site.description,
+  robots: site.indexable ? undefined : { index: false, follow: false },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#ffffff",
+  themeColor: site.themeColor,
   width: "device-width",
   initialScale: 1,
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  // The nonce-based CSP (src/proxy.ts) needs every page rendered per request;
+  // a statically rendered page has no request to read the nonce from.
+  await connection();
   return (
     <html lang="en" className={`${spaceGrotesk.variable} ${GeistMono.variable}`}>
-      <body className="min-h-dvh">{children}</body>
+      <body className="min-h-dvh">
+        {children}
+        <Toaster />
+      </body>
     </html>
   );
 }

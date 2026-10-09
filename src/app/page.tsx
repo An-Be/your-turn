@@ -1,5 +1,8 @@
-import { CreateForm } from "./create-form";
-import { SectionLabel, Shell, SiteFooter, SiteHeader } from "@/components/site-chrome";
+import { SiteFooter } from "@/components/site/site-footer";
+import { SiteHeader } from "@/components/site/site-header";
+import { CreateForm } from "@/components/tracker/create-form";
+import { SectionLabel } from "@/components/ui/section-label";
+import { Shell } from "@/components/ui/shell";
 
 const STEPS = [
   ["Make a tracker", "Two names in, one secret link out. Send it to the other person."],

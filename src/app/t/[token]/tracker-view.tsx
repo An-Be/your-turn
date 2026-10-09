@@ -299,7 +299,7 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
                   <span className="label">starts</span>
                 </div>
                 <div className="flex items-baseline justify-between border-t border-ink px-5 py-4">
-                  <span className="label text-mute">Up next after Done</span>
+                  <span className="label text-mute">Up next</span>
                   <span className="font-display text-[18px] font-medium tracking-[-0.02em]">
                     {names[currentStarter === "A" ? "B" : "A"]}
                   </span>

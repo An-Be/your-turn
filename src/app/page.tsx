@@ -4,13 +4,13 @@ import { SectionLabel, Shell, SiteFooter, SiteHeader } from "@/components/site-c
 const STEPS = [
   ["Make a tracker", "Two names in, one secret link out. Send it to the other person."],
   ["Check today", "The page shows who starts. Same answer on both phones."],
-  ["Tap Done", "It flips for next time. Skip a night and nothing flips."],
+  ["Tap Done", "It flips for next time. Skip a day and nothing flips."],
 ] as const;
 
 const WONT = [
   ["No accounts", "The link is the only key. Both of you can do everything."],
   ["No reminders", "It never pings either of you or nudges anyone to log."],
-  ["Forgets in 7 days", "Older nights are deleted. No streaks, no all-time scores."],
+  ["Forgets in 7 days", "Older days are deleted. No streaks, no all-time scores."],
   ["Nothing leaves", "No export, no sharing the log. It lives in the tracker."],
 ] as const;
 

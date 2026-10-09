@@ -35,7 +35,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ token: 
   const result = await backfillNight(token, date, body.starter, status, by.value);
   if (result.kind === "not_found") return notFound();
   if (result.kind === "conflict") {
-    return json({ error: "That night is already logged.", existing: result.existing }, 409);
+    return json({ error: "That day is already logged.", existing: result.existing }, 409);
   }
   return json({ ok: true }, 201);
 }

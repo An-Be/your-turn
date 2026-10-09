@@ -27,7 +27,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
 
   const result = await correctNight(token, date, parsed.patch, by.value);
   if (result.kind === "not_found") return notFound();
-  if (result.kind === "missing") return json({ error: "That night isn't logged." }, 404);
+  if (result.kind === "missing") return json({ error: "That day isn't logged." }, 404);
   return json({ night: result.night });
 }
 

@@ -133,7 +133,7 @@ export function History({
           </div>
         ))}
         <div className="col-span-2 border-t border-ink px-5 py-2">
-          <span className="label text-mute">Nights started and finished</span>
+          <span className="label text-mute">Days started and finished</span>
         </div>
       </div>
 
@@ -193,7 +193,7 @@ export function History({
                     onChange={(v) => setDraft({ ...draft, starter: v })}
                   />
                   <Segmented
-                    label="That night"
+                    label="That day"
                     value={draft.status}
                     options={[
                       { value: "DONE", label: "Played" },
@@ -202,7 +202,7 @@ export function History({
                     onChange={(v) => setDraft({ ...draft, status: v })}
                   />
                   <p className="text-[12px] leading-relaxed text-mute">
-                    {draft.isNew ? "Adding a past night" : "Fixing a past night"} doesn&apos;t change who starts next.
+                    {draft.isNew ? "Adding a past day" : "Fixing a past day"} doesn&apos;t change who starts next.
                     Use Swap for that.
                   </p>
                   <div className="grid grid-cols-2">
@@ -221,7 +221,7 @@ export function History({
       </ol>
 
       <p className="label mt-3 normal-case tracking-[0.04em] text-mute">
-        Nights older than {windowDays} days are deleted for good. There&apos;s no export.
+        Days older than {windowDays} days are deleted for good. There&apos;s no export.
       </p>
     </section>
   );

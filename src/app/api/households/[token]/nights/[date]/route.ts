@@ -21,7 +21,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
   if (!body.ok) return body.response;
   const { today, starter, status, recordedBy } = body.data;
   if (!isEditablePast(date, today)) {
-    return badRequest(date === today ? "Use Undo for tonight." : "Only the last 7 days can be corrected.");
+    return badRequest(date === today ? "Use Undo for today." : "Only the last 7 days can be corrected.");
   }
 
   const patch: CorrectionPatch = {};
@@ -30,7 +30,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
 
   const result = await correctNight(token, date, patch, recordedBy);
   if (result.kind === "not_found") return notFound();
-  if (result.kind === "missing") return json({ error: "That night isn't logged." }, 404);
+  if (result.kind === "missing") return json({ error: "That day isn't logged." }, 404);
   return json({ night: result.night });
 }
 
@@ -46,7 +46,7 @@ export async function DELETE(req: Request, { params }: Ctx) {
   const sp = new URL(req.url).searchParams;
   const today = sp.get("today") ?? "";
   if (!isValidDate(date) || !isPlausibleToday(today)) return badRequest("Invalid date.");
-  if (date !== today) return badRequest("Only tonight can be undone.");
+  if (date !== today) return badRequest("Only today can be undone.");
   const by = parseRecordedBy(sp.get("by") ?? undefined);
   if (!by.ok) return badRequest("Invalid by.");
 

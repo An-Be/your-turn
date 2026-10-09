@@ -6,14 +6,14 @@ import { Shell } from "@/components/ui/shell";
 
 const STEPS = [
   ["Make a tracker", "Two names in, one secret link out. Send it to the other person."],
-  ["Check tonight", "The page shows who starts. Same answer on both phones."],
-  ["Tap Done", "It flips for next time. Skip a night and nothing flips."],
+  ["Check today", "The page shows who starts. Same answer on both phones."],
+  ["Tap Done", "It flips for next time. Skip a day and nothing flips."],
 ] as const;
 
 const WONT = [
   ["No accounts", "The link is the only key. Both of you can do everything."],
   ["No reminders", "It never pings either of you or nudges anyone to log."],
-  ["Forgets in 7 days", "Older nights are deleted. No streaks, no all-time scores."],
+  ["Forgets in 7 days", "Older days are deleted. No streaks, no all-time scores."],
   ["Nothing leaves", "No export, no sharing the log. It lives in the tracker."],
 ] as const;
 
@@ -23,9 +23,9 @@ export default function Home() {
       <SiteHeader right="No login" />
       <main className="flex flex-col gap-14 py-10">
         <div className="flex flex-col gap-4">
-          <h1 className="display text-[56px]">Whose turn is it tonight?</h1>
+          <h1 className="display text-[56px]">Whose turn is it today?</h1>
           <p className="max-w-[36ch] text-[13px] leading-relaxed text-mute">
-            One shared link for two people who take turns. It shows who starts tonight, flips when you&apos;re
+            One shared link for two people who take turns. It shows who starts today, flips when you&apos;re
             done, and settles &ldquo;wait, who went last time?&rdquo;
           </p>
         </div>

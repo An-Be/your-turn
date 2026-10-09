@@ -259,7 +259,7 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
 
   async function share() {
     try {
-      await navigator.share({ title: "TagYourTurn", text: "Whose turn is it tonight? Here\u2019s our TagYourTurn link.", url });
+      await navigator.share({ title: "TagYourTurn", text: "Whose turn is it today? Here\u2019s our TagYourTurn link.", url });
     } catch {
       // User dismissed the share sheet.
     }
@@ -275,7 +275,7 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
       <main className="flex flex-col gap-10 py-8">
         <section aria-live="polite">
           <SectionLabel n="01" aside={tonight ? (tonight.status === "DONE" ? "Done" : "Skipped") : undefined}>
-            Tonight
+            Today
           </SectionLabel>
 
           <div className="border border-ink">
@@ -286,7 +286,7 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
                   <span className="label">starts</span>
                 </div>
                 <div className="flex items-baseline justify-between border-t border-ink px-5 py-4">
-                  <span className="label text-mute">Tomorrow, if you play</span>
+                  <span className="label text-mute">Up next</span>
                   <span className="font-display text-[18px] font-medium tracking-[-0.02em]">
                     {names[currentStarter === "A" ? "B" : "A"]}
                   </span>
@@ -295,7 +295,7 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
             ) : tonight.status === "DONE" ? (
               <>
                 <div className="flex flex-col gap-3 px-5 pb-6 pt-8">
-                  <span className="label text-mute">Tonight</span>
+                  <span className="label text-mute">Today</span>
                   <h1 className="display break-words text-[clamp(48px,15vw,72px)]">{names[tonight.starter]}</h1>
                   <span className="label">
                     started{tonight.recordedBy ? ` · logged by ${names[tonight.recordedBy]}` : ""}
@@ -330,11 +330,11 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
             {!tonight ? (
               <>
                 <Button size="lg" onClick={() => record("DONE")} disabled={busy || !synced}>
-                  {pending === "done" ? "Saving…" : "Done for tonight"}
+                  {pending === "done" ? "Saving…" : "Done for today"}
                 </Button>
                 <div className="-mt-px grid grid-cols-2">
                   <Button variant="outline" size="lg" onClick={() => record("SKIPPED")} disabled={busy || !synced}>
-                    {pending === "skip" ? "Saving…" : "Skip tonight"}
+                    {pending === "skip" ? "Saving…" : "Skip today"}
                   </Button>
                   <Button variant="outline" size="lg" className="-ml-px" onClick={swap} disabled={busy || !synced}>
                     {pending === "swap" ? "Swapping…" : "Swap"}

@@ -22,7 +22,7 @@ export async function POST(req: Request, { params }: RouteContext<"/api/househol
     const result = await recordTonight(token, date, status, recordedBy);
     if (result.kind === "not_found") return notFound();
     if (result.kind === "conflict") {
-      return json({ error: "Tonight is already logged.", existing: result.existing }, 409);
+      return json({ error: "Today is already logged.", existing: result.existing }, 409);
     }
     return json({ currentStarter: result.currentStarter, tonight: result.tonight }, 201);
   }
@@ -33,7 +33,7 @@ export async function POST(req: Request, { params }: RouteContext<"/api/househol
   const result = await backfillNight(token, date, starter, status, recordedBy);
   if (result.kind === "not_found") return notFound();
   if (result.kind === "conflict") {
-    return json({ error: "That night is already logged.", existing: result.existing }, 409);
+    return json({ error: "That day is already logged.", existing: result.existing }, 409);
   }
   return json({ ok: true }, 201);
 }

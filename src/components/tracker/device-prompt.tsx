@@ -52,7 +52,7 @@ export function DevicePrompt({
           </div>
 
           <p className="text-[12px] leading-relaxed text-mute">
-            Saved on this phone only. It labels who logged each night, nothing more.
+            Saved on this phone only. It labels who logged each day, nothing more.
           </p>
         </div>
 

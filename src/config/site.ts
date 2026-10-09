@@ -1,8 +1,8 @@
 // Everything user-facing that names the tool reads from here.
 export const site = {
   name: "TagYourTurn",
-  description: "Whose turn is it tonight? One shared link for two people. No login, no reminders, forgets after 7 days.",
-  tagline: "Tiny tools for keeping things fair.",
+  description: "Whose turn is it today? One shared link for two people. No login, no reminders, forgets after 7 days.",
+  tagline: "Tiny tools for keeping a rhythm.",
   author: { name: "Andrea", url: "https://andreaberrocal.com" },
   themeColor: "#ffffff",
   /**

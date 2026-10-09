@@ -23,7 +23,7 @@ function shiftDate(date: string, n: number): string {
 }
 
 function dayLabel(date: string, today: string): string {
-  if (date === today) return "Tonight";
+  if (date === today) return "Today";
   if (date === shiftDate(today, -1)) return "Yesterday";
   const [y, m, d] = date.split("-").map(Number);
   const dt = new Date(y, m - 1, d);
@@ -104,7 +104,7 @@ export function History({
   const activityFor = (date: string) => activity.filter((a) => a.date === date);
 
   function open(date: string) {
-    if (date === today) return; // tonight is handled by Done / Skip / Undo above
+    if (date === today) return; // today is handled by Done / Skip / Undo above
     const n = byDate.get(date);
     setDraft(
       n
@@ -133,7 +133,7 @@ export function History({
           </div>
         ))}
         <div className="col-span-2 border-t border-ink px-5 py-2">
-          <span className="label text-mute">Nights started and finished</span>
+          <span className="label text-mute">Days started and finished</span>
         </div>
       </div>
 
@@ -193,7 +193,7 @@ export function History({
                     onChange={(v) => setDraft({ ...draft, starter: v })}
                   />
                   <Segmented
-                    label="That night"
+                    label="That day"
                     value={draft.status}
                     options={[
                       { value: "DONE", label: "Played" },
@@ -202,7 +202,7 @@ export function History({
                     onChange={(v) => setDraft({ ...draft, status: v })}
                   />
                   <p className="text-[12px] leading-relaxed text-mute">
-                    {draft.isNew ? "Adding a past night" : "Fixing a past night"} doesn&apos;t change who starts next.
+                    {draft.isNew ? "Adding a past day" : "Fixing a past day"} doesn&apos;t change who starts next.
                     Use Swap for that.
                   </p>
                   <div className="grid grid-cols-2">
@@ -221,7 +221,7 @@ export function History({
       </ol>
 
       <p className="label mt-3 normal-case tracking-[0.04em] text-mute">
-        Nights older than {windowDays} days are deleted for good. There&apos;s no export.
+        Days older than {windowDays} days are deleted for good. There&apos;s no export.
       </p>
     </section>
   );

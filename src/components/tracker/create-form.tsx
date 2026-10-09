@@ -54,7 +54,7 @@ export function CreateForm() {
           <Input
             aria-label="Second player"
             variant="display"
-            placeholder="Marta"
+            placeholder="Sabrina"
             value={b}
             onChange={(e) => setB(e.target.value)}
             maxLength={NAME_MAX}
@@ -65,7 +65,7 @@ export function CreateForm() {
       </section>
 
       <section>
-        <SectionLabel n="02">Who starts tonight</SectionLabel>
+        <SectionLabel n="02">Who starts today</SectionLabel>
         <div role="radiogroup" className="grid grid-cols-2">
           {(["A", "B"] as const).map((p, i) => {
             const label = (p === "A" ? a : b).trim() || (p === "A" ? "Player 1" : "Player 2");

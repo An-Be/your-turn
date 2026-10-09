@@ -45,7 +45,7 @@ export function CreateForm() {
           <Input
             aria-label="First player"
             variant="display"
-            placeholder="Andrea"
+            placeholder="Your name"
             value={a}
             onChange={(e) => setA(e.target.value)}
             maxLength={NAME_MAX}
@@ -54,7 +54,7 @@ export function CreateForm() {
           <Input
             aria-label="Second player"
             variant="display"
-            placeholder="Sabrina"
+            placeholder="Their name"
             value={b}
             onChange={(e) => setB(e.target.value)}
             maxLength={NAME_MAX}
@@ -100,7 +100,9 @@ export function CreateForm() {
             {error}
           </p>
         ) : (
-          <p className="label text-mute">You get a secret link. Anyone with it can view and log.</p>
+          <p className="label text-mute">
+            You get a secret link. Save it: there&apos;s no login, so the link is the only way back.
+          </p>
         )}
       </div>
     </form>

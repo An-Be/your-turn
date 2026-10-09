@@ -289,6 +289,10 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
               There&apos;s no login, so this link is the only way back to this tracker. Copy it somewhere safe and send
               it to {recipient}.
             </p>
+            <p className="px-4 pt-3 text-[12px] leading-relaxed text-mute">
+              We recommend saving it to your Home Screen so you don&apos;t lose it. On iPhone, tap Share in Safari, then
+              Add to Home Screen.
+            </p>
             <div className="p-4">
               <Button block onClick={copy}>
                 {copied ? "Copied" : "Copy link"}
@@ -401,7 +405,8 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
             </p>
           ) : (
             <p className="mb-3 text-[12px] leading-relaxed text-mute">
-              This link is the only way back. Bookmark it or add it to your Home Screen.
+              This link is the only way back. We recommend saving it to your Home Screen so you don&apos;t lose it: on
+              iPhone, tap Share in Safari, then Add to Home Screen.
             </p>
           )}
           <div className="border border-ink">

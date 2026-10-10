@@ -33,7 +33,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   await connection();
   return (
     <html lang="en" className={`${spaceGrotesk.variable} ${GeistMono.variable}`}>
-      <body className="min-h-dvh">
+      <body className="flex min-h-dvh flex-col">
         {children}
         <Toaster />
       </body>

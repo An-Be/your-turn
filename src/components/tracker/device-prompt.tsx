@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Mark } from "@/components/site/mark";
+import { SiteHeader } from "@/components/site/site-header";
 import type { Player } from "@/lib/types";
 
 export function DevicePrompt({
@@ -20,13 +20,10 @@ export function DevicePrompt({
       role="dialog"
       aria-modal="true"
       aria-labelledby="device-q"
-      className="fixed inset-0 z-50 overflow-y-auto bg-paper"
+      className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-paper"
     >
-      <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-4">
-        <div className="flex items-center gap-3 border-b border-ink py-4">
-          <Mark size={28} />
-          <span className="label ml-auto text-mute">00 — Setup</span>
-        </div>
+      <SiteHeader right="00 — Setup" />
+      <div className="mx-auto flex w-full max-w-md flex-1 flex-col px-4">
 
         <div className="flex flex-1 flex-col justify-center gap-8 py-10">
           <h2 id="device-q" className="display text-[44px]">

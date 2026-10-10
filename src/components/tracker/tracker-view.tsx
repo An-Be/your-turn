@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { SectionLabel } from "@/components/ui/section-label";
 import { Shell } from "@/components/ui/shell";
 import { api } from "@/lib/api-client";
+import { track } from "@/lib/track";
 import { copyToClipboard } from "@/lib/clipboard";
 import { forgetTracker, saveTracker } from "@/lib/saved-tracker";
 import { nameFor, type Player, type TrackerData } from "@/lib/types";
@@ -159,6 +160,7 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
   function pick(v: DeviceChoice) {
     writeDevice(tracker.id, v);
     setDevice(v);
+    track("device_chosen", { choice: v === "skip" ? "skip" : "player" });
     setPromptOpen(false);
   }
 
@@ -175,6 +177,7 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
     if (res.ok) {
       setCurrentStarter(res.data.currentStarter);
       setTonight(res.data.tonight);
+      track("night_recorded", { status: status === "DONE" ? "done" : "skipped", when: "tonight" });
       refresh();
     } else if (res.status === 409 && existingFrom(res.body)) {
       const e = existingFrom(res.body) as Night;
@@ -194,6 +197,7 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
     const res = await post<{ currentStarter: Player }>("/swap", { today: localToday(), recordedBy });
     if (res.ok) {
       setCurrentStarter(res.data.currentStarter);
+      track("starter_swapped");
       refresh();
     } else {
       setNotice(res.status === 0 ? "You're offline. Nothing was saved." : res.error);
@@ -212,6 +216,7 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
     if (res.ok) {
       setCurrentStarter(res.data.currentStarter);
       setTonight(null);
+      track("night_undone");
       refresh();
     } else if (res.status === 409) {
       await refresh();
@@ -231,6 +236,7 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
       window.history.replaceState(null, "", `/t/${res.data.token}`);
       saveTracker({ token: res.data.token, playerAName: tracker.playerAName, playerBName: tracker.playerBName });
       setLinkNotice("rotated");
+      track("link_rotated");
       setConfirmRotate(false);
     } else if (!res.ok) {
       setNotice(res.status === 0 ? "You're offline. The link was not changed." : res.error);
@@ -255,12 +261,17 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
       setNotice(res.status === 0 ? "You're offline. Nothing was saved." : res.error);
       return false;
     }
+    track(d.isNew ? "night_recorded" : "night_corrected", {
+      status: d.status === "DONE" ? "done" : "skipped",
+      ...(d.isNew ? { when: "past" } : {}),
+    });
     return true;
   }
 
   async function copy() {
     // Falls back to execCommand on plain-http LAN testing; if both fail, the URL stays visible and selectable.
     if (!(await copyToClipboard(url))) return;
+    track("link_copied");
     setCopied(true);
     setTimeout(() => setCopied(false), 1600);
   }
@@ -268,6 +279,7 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
   async function share() {
     try {
       await navigator.share({ title: "TagYourTurn", text: "Whose turn is it today? Here\u2019s our TagYourTurn link.", url });
+      track("link_shared");
     } catch {
       // User dismissed the share sheet.
     }

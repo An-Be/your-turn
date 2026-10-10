@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSyncExternalStore } from "react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { SectionLabel } from "@/components/ui/section-label";
+import { track } from "@/lib/track";
 import { forgetTracker, readSavedTracker, subscribeSavedTracker } from "@/lib/saved-tracker";
 
 /**
@@ -28,12 +29,16 @@ export function SavedTrackerCard() {
         </div>
         <Link
           href={`/t/${saved.token}`}
+          onClick={() => track("saved_tracker_opened")}
           className={buttonVariants({ size: "lg", block: true, className: "border-x-0 border-b-0" })}
         >
           Open your tracker
         </Link>
       </div>
-      <Button variant="ghost" size="sm" className="mt-2 px-0" onClick={() => forgetTracker()}>
+      <Button variant="ghost" size="sm" className="mt-2 px-0" onClick={() => {
+          track("saved_tracker_forgotten");
+          forgetTracker();
+        }}>
         Not yours? Forget it on this phone
       </Button>
     </section>

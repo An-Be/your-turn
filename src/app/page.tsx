@@ -24,7 +24,7 @@ export default function Home() {
       <SiteHeader right="No login" />
       <Shell>
         <main className="flex flex-col gap-14 py-10">
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col items-center gap-4 text-center">
             <h1 className="display text-[56px]">Whose turn is it today?</h1>
             <p className="max-w-[36ch] text-[13px] leading-relaxed text-mute">
               One shared link for two people who take turns. It shows who starts today, flips when you&apos;re

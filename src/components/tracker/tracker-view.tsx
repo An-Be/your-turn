@@ -277,202 +277,204 @@ export function TrackerView({ tracker, justCreated }: { tracker: TrackerData; ju
   const busy = pending !== null;
 
   return (
-    <Shell>
+    <>
       <SiteHeader right={todayLabel || " "} />
+      <Shell>
 
-      <main className="flex flex-col gap-10 py-8">
-        {linkNotice === "created" ? (
-          <section className="border-2 border-ink">
-            <p className="px-4 pt-4 text-[13px] leading-relaxed">
-              <span className="font-display text-[18px] font-medium tracking-[-0.02em]">Save your link.</span>
-              <br />
-              There&apos;s no login, so this link is the only way back to this tracker. Copy it somewhere safe and send
-              it to {recipient}.
-            </p>
-            <p className="px-4 pt-3 text-[12px] leading-relaxed text-mute">
-              We recommend saving it to your Home Screen so you don&apos;t lose it. On iPhone, tap Share in Safari, then
-              Add to Home Screen.
-            </p>
-            <div className="p-4">
-              <Button block onClick={copy}>
-                {copied ? "Copied" : "Copy link"}
-              </Button>
-            </div>
-          </section>
-        ) : null}
-        <section aria-live="polite">
-          <SectionLabel n="01" aside={tonight ? (tonight.status === "DONE" ? "Done" : "Skipped") : undefined}>
-            Today
-          </SectionLabel>
-
-          <div className="border border-ink">
-            {!tonight ? (
-              <>
-                <div className="flex flex-col gap-3 px-5 pb-6 pt-8">
-                  <h1 className="display break-words text-[clamp(56px,18vw,88px)]">{names[currentStarter]}</h1>
-                  <span className="label">starts</span>
-                </div>
-                <div className="flex items-baseline justify-between border-t border-ink px-5 py-4">
-                  <span className="label text-mute">Up next</span>
-                  <span className="font-display text-[18px] font-medium tracking-[-0.02em]">
-                    {names[currentStarter === "A" ? "B" : "A"]}
-                  </span>
-                </div>
-              </>
-            ) : tonight.status === "DONE" ? (
-              <>
-                <div className="flex flex-col gap-3 px-5 pb-6 pt-8">
-                  <span className="label text-mute">Today</span>
-                  <h1 className="display break-words text-[clamp(48px,15vw,72px)]">{names[tonight.starter]}</h1>
-                  <span className="label">
-                    started{tonight.recordedBy ? ` · logged by ${names[tonight.recordedBy]}` : ""}
-                  </span>
-                </div>
-                <div className="flex items-baseline justify-between border-t border-ink bg-ink px-5 py-4 text-paper">
-                  <span className="label">Next time</span>
-                  <span className="font-display text-[22px] font-medium tracking-[-0.02em]">
-                    {names[currentStarter]} starts
-                  </span>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="flex flex-col gap-3 px-5 pb-6 pt-8">
-                  <h1 className="display text-[clamp(48px,15vw,72px)]">Skipped</h1>
-                  <span className="label">
-                    no turn used{tonight.recordedBy ? ` · logged by ${names[tonight.recordedBy]}` : ""}
-                  </span>
-                </div>
-                <div className="flex items-baseline justify-between border-t border-ink bg-ink px-5 py-4 text-paper">
-                  <span className="label">Next time</span>
-                  <span className="font-display text-[22px] font-medium tracking-[-0.02em]">
-                    {names[currentStarter]} starts
-                  </span>
-                </div>
-              </>
-            )}
-          </div>
-
-          <div className="mt-3 flex flex-col">
-            {!tonight ? (
-              <>
-                <Button size="lg" onClick={() => record("DONE")} disabled={busy || !synced}>
-                  {pending === "done" ? "Saving…" : "Done for today"}
-                </Button>
-                <div className="-mt-px grid grid-cols-2">
-                  <Button variant="outline" size="lg" onClick={() => record("SKIPPED")} disabled={busy || !synced}>
-                    {pending === "skip" ? "Saving…" : "Skip today"}
-                  </Button>
-                  <Button variant="outline" size="lg" className="-ml-px" onClick={swap} disabled={busy || !synced}>
-                    {pending === "swap" ? "Swapping…" : "Swap"}
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <Button variant="outline" size="lg" onClick={undo} disabled={busy}>
-                {pending === "undo" ? "Undoing…" : "Undo"}
-              </Button>
-            )}
-          </div>
-
-          {notice ? (
-            <p role="status" className="label mt-3 border border-ink px-4 py-3">
-              {notice}
-            </p>
-          ) : null}
-        </section>
-
-        {synced && today ? (
-          <History
-            today={today}
-            windowDays={windowDays}
-            history={history}
-            activity={activity}
-            split={split}
-            names={names}
-            busy={pending === "history"}
-            onSave={saveNight}
-          />
-        ) : null}
-
-        <section>
-          <SectionLabel n="03">Link</SectionLabel>
-          {linkNotice ? (
-            <p className="mb-3 text-[13px] leading-relaxed">
-              {linkNotice === "rotated"
-                ? `New link. The old one no longer works, so save this one and send it to ${recipient}.`
-                : `Save this link and send it to ${recipient}. There's no login, so it's the only way back to this tracker. Keep it between you two.`}
-            </p>
-          ) : (
-            <p className="mb-3 text-[12px] leading-relaxed text-mute">
-              This link is the only way back. We recommend saving it to your Home Screen so you don&apos;t lose it: on
-              iPhone, tap Share in Safari, then Add to Home Screen.
-            </p>
-          )}
-          <div className="border border-ink">
-            <div className="truncate px-4 py-3 text-[12px] text-mute" title={url}>
-              {url || " "}
-            </div>
-            <div className={`grid border-t border-ink ${canShare ? "grid-cols-2" : "grid-cols-1"}`}>
-              {canShare ? (
-                <Button variant="primary" className="h-12 border-0" onClick={share}>
-                  Share
-                </Button>
-              ) : null}
-              <Button
-                variant={canShare ? "outline" : "primary"}
-                className={`h-12 border-0 ${canShare ? "border-l border-ink" : ""}`}
-                onClick={copy}
-              >
-                {copied ? "Copied" : "Copy link"}
-              </Button>
-            </div>
-          </div>
-
-          {!confirmRotate ? (
-            <Button variant="ghost" size="sm" className="mt-2 px-0" onClick={() => setConfirmRotate(true)}>
-              Rotate link
-            </Button>
-          ) : (
-            <div className="mt-3 border border-ink">
-              <p className="px-4 py-3 text-[12px] leading-relaxed">
-                Makes a new link and kills the old one on both phones. History stays. Use this if the link leaked.
+        <main className="flex flex-col gap-10 py-8">
+          {linkNotice === "created" ? (
+            <section className="border-2 border-ink">
+              <p className="px-4 pt-4 text-[13px] leading-relaxed">
+                <span className="font-display text-[18px] font-medium tracking-[-0.02em]">Save your link.</span>
+                <br />
+                There&apos;s no login, so this link is the only way back to this tracker. Copy it somewhere safe and send
+                it to {recipient}.
               </p>
-              <div className="grid grid-cols-2 border-t border-ink">
-                <Button variant="outline" className="h-12 border-0" onClick={() => setConfirmRotate(false)} disabled={busy}>
-                  Cancel
+              <p className="px-4 pt-3 text-[12px] leading-relaxed text-mute">
+                We recommend saving it to your Home Screen so you don&apos;t lose it. On iPhone, tap Share in Safari, then
+                Add to Home Screen.
+              </p>
+              <div className="p-4">
+                <Button block onClick={copy}>
+                  {copied ? "Copied" : "Copy link"}
                 </Button>
-                <Button variant="primary" className="h-12 border-0" onClick={rotate} disabled={busy}>
-                  {pending === "rotate" ? "Rotating…" : "Rotate"}
+              </div>
+            </section>
+          ) : null}
+          <section aria-live="polite">
+            <SectionLabel n="01" aside={tonight ? (tonight.status === "DONE" ? "Done" : "Skipped") : undefined}>
+              Today
+            </SectionLabel>
+
+            <div className="border border-ink">
+              {!tonight ? (
+                <>
+                  <div className="flex flex-col gap-3 px-5 pb-6 pt-8">
+                    <h1 className="display break-words text-[clamp(56px,18vw,88px)]">{names[currentStarter]}</h1>
+                    <span className="label">starts</span>
+                  </div>
+                  <div className="flex items-baseline justify-between border-t border-ink px-5 py-4">
+                    <span className="label text-mute">Up next</span>
+                    <span className="font-display text-[18px] font-medium tracking-[-0.02em]">
+                      {names[currentStarter === "A" ? "B" : "A"]}
+                    </span>
+                  </div>
+                </>
+              ) : tonight.status === "DONE" ? (
+                <>
+                  <div className="flex flex-col gap-3 px-5 pb-6 pt-8">
+                    <span className="label text-mute">Today</span>
+                    <h1 className="display break-words text-[clamp(48px,15vw,72px)]">{names[tonight.starter]}</h1>
+                    <span className="label">
+                      started{tonight.recordedBy ? ` · logged by ${names[tonight.recordedBy]}` : ""}
+                    </span>
+                  </div>
+                  <div className="flex items-baseline justify-between border-t border-ink bg-ink px-5 py-4 text-paper">
+                    <span className="label">Next time</span>
+                    <span className="font-display text-[22px] font-medium tracking-[-0.02em]">
+                      {names[currentStarter]} starts
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex flex-col gap-3 px-5 pb-6 pt-8">
+                    <h1 className="display text-[clamp(48px,15vw,72px)]">Skipped</h1>
+                    <span className="label">
+                      no turn used{tonight.recordedBy ? ` · logged by ${names[tonight.recordedBy]}` : ""}
+                    </span>
+                  </div>
+                  <div className="flex items-baseline justify-between border-t border-ink bg-ink px-5 py-4 text-paper">
+                    <span className="label">Next time</span>
+                    <span className="font-display text-[22px] font-medium tracking-[-0.02em]">
+                      {names[currentStarter]} starts
+                    </span>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="mt-3 flex flex-col">
+              {!tonight ? (
+                <>
+                  <Button size="lg" onClick={() => record("DONE")} disabled={busy || !synced}>
+                    {pending === "done" ? "Saving…" : "Done for today"}
+                  </Button>
+                  <div className="-mt-px grid grid-cols-2">
+                    <Button variant="outline" size="lg" onClick={() => record("SKIPPED")} disabled={busy || !synced}>
+                      {pending === "skip" ? "Saving…" : "Skip today"}
+                    </Button>
+                    <Button variant="outline" size="lg" className="-ml-px" onClick={swap} disabled={busy || !synced}>
+                      {pending === "swap" ? "Swapping…" : "Swap"}
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <Button variant="outline" size="lg" onClick={undo} disabled={busy}>
+                  {pending === "undo" ? "Undoing…" : "Undo"}
+                </Button>
+              )}
+            </div>
+
+            {notice ? (
+              <p role="status" className="label mt-3 border border-ink px-4 py-3">
+                {notice}
+              </p>
+            ) : null}
+          </section>
+
+          {synced && today ? (
+            <History
+              today={today}
+              windowDays={windowDays}
+              history={history}
+              activity={activity}
+              split={split}
+              names={names}
+              busy={pending === "history"}
+              onSave={saveNight}
+            />
+          ) : null}
+
+          <section>
+            <SectionLabel n="03">Link</SectionLabel>
+            {linkNotice ? (
+              <p className="mb-3 text-[13px] leading-relaxed">
+                {linkNotice === "rotated"
+                  ? `New link. The old one no longer works, so save this one and send it to ${recipient}.`
+                  : `Save this link and send it to ${recipient}. There's no login, so it's the only way back to this tracker. Keep it between you two.`}
+              </p>
+            ) : (
+              <p className="mb-3 text-[12px] leading-relaxed text-mute">
+                This link is the only way back. We recommend saving it to your Home Screen so you don&apos;t lose it: on
+                iPhone, tap Share in Safari, then Add to Home Screen.
+              </p>
+            )}
+            <div className="border border-ink">
+              <div className="truncate px-4 py-3 text-[12px] text-mute" title={url}>
+                {url || " "}
+              </div>
+              <div className={`grid border-t border-ink ${canShare ? "grid-cols-2" : "grid-cols-1"}`}>
+                {canShare ? (
+                  <Button variant="primary" className="h-12 border-0" onClick={share}>
+                    Share
+                  </Button>
+                ) : null}
+                <Button
+                  variant={canShare ? "outline" : "primary"}
+                  className={`h-12 border-0 ${canShare ? "border-l border-ink" : ""}`}
+                  onClick={copy}
+                >
+                  {copied ? "Copied" : "Copy link"}
                 </Button>
               </div>
             </div>
-          )}
-        </section>
 
-        <section>
-          <SectionLabel n="04">This device</SectionLabel>
-          <div className="flex items-center justify-between border border-ink px-4 py-3">
-            <span className="font-display text-[18px] font-medium tracking-[-0.02em]">
-              {!hydrated ? " " : recordedBy ? names[recordedBy] : "Not set"}
-            </span>
-            <Button variant="ghost" size="sm" onClick={() => setPromptOpen(true)}>
-              Change
-            </Button>
-          </div>
-        </section>
-      </main>
+            {!confirmRotate ? (
+              <Button variant="ghost" size="sm" className="mt-2 px-0" onClick={() => setConfirmRotate(true)}>
+                Rotate link
+              </Button>
+            ) : (
+              <div className="mt-3 border border-ink">
+                <p className="px-4 py-3 text-[12px] leading-relaxed">
+                  Makes a new link and kills the old one on both phones. History stays. Use this if the link leaked.
+                </p>
+                <div className="grid grid-cols-2 border-t border-ink">
+                  <Button variant="outline" className="h-12 border-0" onClick={() => setConfirmRotate(false)} disabled={busy}>
+                    Cancel
+                  </Button>
+                  <Button variant="primary" className="h-12 border-0" onClick={rotate} disabled={busy}>
+                    {pending === "rotate" ? "Rotating…" : "Rotate"}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </section>
 
-      <SiteFooter />
+          <section>
+            <SectionLabel n="04">This device</SectionLabel>
+            <div className="flex items-center justify-between border border-ink px-4 py-3">
+              <span className="font-display text-[18px] font-medium tracking-[-0.02em]">
+                {!hydrated ? " " : recordedBy ? names[recordedBy] : "Not set"}
+              </span>
+              <Button variant="ghost" size="sm" onClick={() => setPromptOpen(true)}>
+                Change
+              </Button>
+            </div>
+          </section>
+        </main>
 
-      {promptOpen ? (
-        <DevicePrompt
-          names={{ A: nameFor(tracker, "A"), B: nameFor(tracker, "B") }}
-          current={device}
-          onPick={pick}
-          onClose={device !== null ? () => setPromptOpen(false) : undefined}
-        />
-      ) : null}
-    </Shell>
+        <SiteFooter />
+
+        {promptOpen ? (
+          <DevicePrompt
+            names={{ A: nameFor(tracker, "A"), B: nameFor(tracker, "B") }}
+            current={device}
+            onPick={pick}
+            onClose={device !== null ? () => setPromptOpen(false) : undefined}
+          />
+        ) : null}
+      </Shell>
+    </>
   );
 }

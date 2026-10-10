@@ -1,6 +1,6 @@
 <!-- BEGIN:nextjs-agent-rules -->
 
-# This is NOT the Next.js you know
+## This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
 
@@ -59,6 +59,7 @@ src/config/              site.ts (name, copy), csp.ts (CSP allowlist), routes.ts
 src/lib/                 pure logic, no JSX; safe on client and server
 src/lib/server/          server-only modules (each imports "server-only")
 src/proxy.ts             per-request nonce CSP
+src/instrumentation-client.ts  PostHog init (off without env vars)
 prisma/                  schema, migrations, sql/app-role.sql
 scripts/db-check.mjs     build-time schema drift check
 ```
@@ -88,6 +89,12 @@ scripts/db-check.mjs     build-time schema drift check
   CSP header. Add third-party origins in `src/config/csp.ts`, one comment per entry.
   Violations are logged by `/api/csp-report` (filter Vercel logs on `[csp]`).
 - **No inline `style` attributes.** Production CSP is nonce-only for styles.
+- **Analytics never carries a secret or a person.** Send events only through
+  `track()` (`src/lib/track.ts`) with flat counts, modes and outcomes: no names,
+  free text, tokens or per-person amounts. URLs are redacted by `redactEvent`
+  (`src/lib/analytics.ts`) from `secretPathPrefixes`; session replay stays off
+  unless a tool turns it on with full text masking. See
+  `docs/modules/analytics-posthog.md`.
 
 ## Database
 

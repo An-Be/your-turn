@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { SectionLabel } from "@/components/ui/section-label";
+import { track } from "@/lib/track";
 import { api } from "@/lib/api-client";
 import { NAME_MAX } from "@/lib/tracker-schema";
 import type { Player } from "@/lib/types";
@@ -34,6 +35,7 @@ export function CreateForm() {
       setBusy(false);
       return;
     }
+    track("tracker_created");
     router.push(`/t/${res.data.token}?new=1`);
   }
 

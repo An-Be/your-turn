@@ -1,4 +1,5 @@
-import type { CspDirectives } from "@/lib/csp";
+import { posthogCsp } from "@/lib/analytics";
+import { mergeDirectives, type CspDirectives } from "@/lib/csp";
 
 // Per-tool additions to the Content-Security-Policy, merged into the strict
 // defaults in src/lib/csp.ts. Add only the origins a feature actually needs and
@@ -8,4 +9,8 @@ import type { CspDirectives } from "@/lib/csp";
 //   "img-src": ["https://*.ufs.sh"],                       // stored receipt photos
 //
 // See docs/modules/*.md for the exact entries each optional module needs.
-export const cspAllowlist: CspDirectives = {};
+export const cspAllowlist: CspDirectives = mergeDirectives(
+  {},
+  // PostHog ingest + its lazy-loaded scripts; empty when analytics is off.
+  posthogCsp(process.env.NEXT_PUBLIC_POSTHOG_HOST),
+);

@@ -5,6 +5,8 @@ export const site = {
   tagline: "Tiny tools for keeping a rhythm.",
   author: { name: "Andrea", url: "https://andreaberrocal.com" },
   themeColor: "#ffffff",
+  /** Browser UI color in dark mode; matches --color-paper there. */
+  themeColorDark: "#0b0b0b",
   /**
    * The landing page is public. Tracker pages stay out of search engines on
    * their own (page metadata + X-Robots-Tag on /t/* in next.config.ts).

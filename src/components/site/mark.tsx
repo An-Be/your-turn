@@ -1,23 +1,14 @@
 /**
- * Rally: two paddles and a ball, read as "back and forth". Drawn on a 16px
- * grid (like Tab Math's mark) so it stays crisp as a favicon. Same drawing as
- * src/app/icon.svg; keep the two in sync.
- * Same construction rules as Tab Math's icon: black square, white shapes, no radius.
+ * Placeholder mark: two bars trading sides, read as "you, then me".
+ * Same construction rules as Tab Math's icon: solid square, bars cut out, no radius.
+ * Drawn with tokens so it inverts in dark mode (ink square, paper bars).
  */
 export function Mark({ size = 28, className }: { size?: number; className?: string }) {
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 16 16"
-      shapeRendering="crispEdges"
-      aria-hidden="true"
-      className={className}
-    >
-      <rect width="16" height="16" fill="#000" />
-      <rect x="3" y="4" width="2" height="8" fill="#fff" />
-      <rect x="11" y="4" width="2" height="8" fill="#fff" />
-      <rect x="8" y="7" width="2" height="2" fill="#fff" />
+    <svg width={size} height={size} viewBox="0 0 100 100" aria-hidden="true" className={className}>
+      <rect width="100" height="100" className="fill-ink" />
+      <rect x="20" y="30" width="44" height="12" className="fill-paper" />
+      <rect x="36" y="58" width="44" height="12" className="fill-paper" />
     </svg>
   );
 }
